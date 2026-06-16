@@ -1,4 +1,5 @@
 <?php require 'config/db.php'; require 'config/helpers.php';
+require_non_staff();
 $mode=$_GET['mode']??'day'; $date=$_GET['date']??today();
 if($mode==='week'){ $start=date('Y-m-d',strtotime('monday this week',strtotime($date))); $end=date('Y-m-d',strtotime($start.' +6 days')); }
 elseif($mode==='month'){ $start=date('Y-m-01',strtotime($date)); $end=date('Y-m-t',strtotime($date)); }

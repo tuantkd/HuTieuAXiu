@@ -1,4 +1,5 @@
 <?php require 'config/db.php'; require 'config/helpers.php';
+require_non_staff();
 $id=(int)($_GET['id']??0); $p=['category_id'=>1,'name'=>'','price'=>0,'unit'=>'phần','image_url'=>'assets/img/hu-tieu.svg','is_active'=>1];
 if($id) $p=$conn->query("SELECT * FROM products WHERE id=$id")->fetch_assoc();
 if($_SERVER['REQUEST_METHOD']==='POST'){
