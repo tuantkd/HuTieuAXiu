@@ -98,12 +98,17 @@ include_once 'header.php'; ?>
                             href="?remove=<?= $it['id'] ?>">Xóa</a>
                     </div>
                     <div class="cart-qty-box" data-id="<?= $it['id'] ?>" data-price="<?= $it['price'] ?>">
-                        <div class="cart-qty-control"><button class="cart-qty-btn" type="button" data-action="decrease"
-                                aria-label="Giảm số lượng">-</button><input class="cart-qty-input" type="number" min="0"
-                                name="qty[<?= $it['id'] ?>]" value="<?= $it['quantity'] ?>" inputmode="numeric" readonly><button
-                                class="cart-qty-btn" type="button" data-action="increase" aria-label="Tăng số lượng">+</button>
+                        <div class="cart-qty-control">
+                            <button class="cart-qty-btn" type="button" data-action="decrease"
+                                aria-label="Giảm số lượng">-</button>
+                            <input class="cart-qty-input" type="number" min="0" name="qty[<?= $it['id'] ?>]"
+                                value="<?= $it['quantity'] ?>" inputmode="numeric">
+                            <button class="cart-qty-btn" type="button" data-action="increase"
+                                aria-label="Tăng số lượng">+</button>
                         </div>
-                        <div class="right small cart-line-total"><?= money_vnd($it['price'] * $it['quantity']) ?></div>
+                        <div class="right small cart-line-total">
+                            <?= money_vnd($it['price'] * $it['quantity']) ?>
+                        </div>
                     </div>
                 </div><?php endforeach; ?>
         </div>
@@ -112,11 +117,11 @@ include_once 'header.php'; ?>
             <div class="choice">
                 <label class="btn btn-red">
                     <input type="radio" name="order_type" value="cash" checked>
-                    <?= h(order_type_icon('cash')) ?> <?= h(order_type_label('cash')) ?>
+                    <?= h(order_type_icon('cash')) ?>     <?= h(order_type_label('cash')) ?>
                 </label>
                 <label class="btn btn-red">
                     <input type="radio" name="order_type" value="bank_transfer">
-                    <?= h(order_type_icon('bank_transfer')) ?> <?= h(order_type_label('bank_transfer')) ?>
+                    <?= h(order_type_icon('bank_transfer')) ?>     <?= h(order_type_label('bank_transfer')) ?>
                 </label>
             </div>
             <input class="input" name="note" placeholder="Ghi chú nếu có"><br><br>
@@ -136,6 +141,10 @@ include_once 'header.php'; ?>
         }).format(value);
     }
 
+    function getSafeQty(value) {
+        return Math.max(0, Number(value || 0));
+    }
+
     function setCartCount(count) {
         document.querySelectorAll('.js-cart-count').forEach(function (node) {
             node.textContent = count;
@@ -152,7 +161,7 @@ include_once 'header.php'; ?>
         document.querySelectorAll('.cart-qty-box').forEach(function (item) {
             var qtyInput = item.querySelector('.cart-qty-input');
             var price = Number(item.dataset.price || 0);
-            var qty = Math.max(0, Number(qtyInput.value || 0));
+            var qty = getSafeQty(qtyInput.value);
             total += price * qty;
         });
         setCartTotal(formatVnd(total));
@@ -174,7 +183,7 @@ include_once 'header.php'; ?>
         var input = box.querySelector('.cart-qty-input');
         var lineTotal = box.querySelector('.cart-line-total');
         var unitPrice = Number(box.dataset.price || 0);
-        var safeQty = Math.max(0, Number(qty || 0));
+        var safeQty = getSafeQty(qty);
         input.value = safeQty;
         lineTotal.textContent = formatVnd(unitPrice * safeQty);
         updateCartPreview();
@@ -225,7 +234,7 @@ include_once 'header.php'; ?>
 
         box.querySelectorAll('.cart-qty-btn').forEach(function (btn) {
             btn.addEventListener('click', function () {
-                var previousQty = Number(input.value || 0);
+                var previousQty = getSafeQty(input.value);
                 var step = btn.dataset.action === 'increase' ? 1 : -1;
                 var nextQty = Math.max(0, previousQty + step);
 
@@ -234,6 +243,25 @@ include_once 'header.php'; ?>
                 syncRow(box, nextQty);
                 sendQtyUpdate(box, nextQty, previousQty);
             });
+        });
+
+        input.addEventListener('input', function () {
+            var nextQty = getSafeQty(input.value);
+            syncRow(box, nextQty);
+        });
+
+        input.addEventListener('blur', function () {
+            var previousQty = getSafeQty(input.dataset.prevQty || input.value);
+            var currentQty = getSafeQty(input.value);
+
+            if (currentQty === previousQty) return;
+
+            input.dataset.prevQty = currentQty;
+            sendQtyUpdate(box, currentQty, previousQty);
+        });
+
+        input.addEventListener('focus', function () {
+            input.dataset.prevQty = getSafeQty(input.value);
         });
     });
 </script>
