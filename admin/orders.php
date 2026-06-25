@@ -17,7 +17,7 @@ $sql = 'SELECT o.id, o.order_code, o.order_type, o.total_amount, o.note, o.creat
 $types = 's';
 $params = [$date];
 
-if (in_array($orderType, ['dine_in', 'takeaway'], true)) {
+if (in_array($orderType, ['cash', 'bank_transfer'], true)) {
     $sql .= ' AND o.order_type = ?';
     $types .= 's';
     $params[] = $orderType;
@@ -48,8 +48,8 @@ include __DIR__ . '/layout/header.php';
             <label for="order_type">Loại đơn</label>
             <select id="order_type" name="order_type">
                 <option value="">Tất cả</option>
-                <option value="dine_in" <?= $orderType === 'dine_in' ? 'selected' : '' ?>>Ăn tại quán</option>
-                <option value="takeaway" <?= $orderType === 'takeaway' ? 'selected' : '' ?>>Mang đi</option>
+                <option value="cash" <?= $orderType === 'cash' ? 'selected' : '' ?>>Ăn tại quán</option>
+                <option value="bank_transfer" <?= $orderType === 'bank_transfer' ? 'selected' : '' ?>>Mang đi</option>
             </select>
         </div>
         <div class="field" style="display:flex;align-items:flex-end;">

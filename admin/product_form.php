@@ -33,7 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $product['name'] = trim($_POST['name'] ?? '');
     $product['price'] = (int) ($_POST['price'] ?? 0);
     $product['unit'] = trim($_POST['unit'] ?? 'phần');
-    $product['image_url'] = trim($_POST['image_url'] ?? '');
     $product['is_active'] = isset($_POST['is_active']) ? 1 : 0;
 
     if ($product['category_id'] <= 0) {
@@ -42,8 +41,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($product['name'] === '') {
         $errors[] = 'Tên món không được để trống.';
     }
-    if ($product['price'] <= 0) {
-        $errors[] = 'Giá bán phải lớn hơn 0.';
+    if ($product['price'] < 0) {
+        $errors[] = 'Giá bán phải lớn hơn hoặc bằng 0.';
+    }
+
+    $uploadDir = __DIR__ . '/../assets/img';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    if (!empty($_FILES['image_file']) && $_FILES['image_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+        $file = $_FILES['image_file'];
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            $errors[] = 'Lỗi khi tải ảnh lên.';
+        } else {
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml'];
+            if (!in_array($file['type'], $allowedTypes, true)) {
+                $errors[] = 'Chỉ cho phép ảnh JPEG, PNG, GIF hoặc SVG.';
+            } else {
+                $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+                $filename = 'product_' . time() . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
+                $targetPath = $uploadDir . '/' . $filename;
+
+                if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+                    $errors[] = 'Không thể lưu file ảnh.';
+                } else {
+                    $product['image_url'] = 'assets/img/' . $filename;
+                }
+            }
+        }
+    } elseif (!$isEditing) {
+        $product['image_url'] = 'assets/img/images.png';
     }
 
     if (empty($errors)) {
@@ -69,8 +97,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 define('ADMIN_APP', true);
-include __DIR__ . '/layout/header.php';
+include_once __DIR__ . '/layout/header.php';
 ?>
+
 <div class="panel">
     <div class="panel-header">
         <h3><?= admin_h($page_title) ?></h3>
@@ -81,7 +110,7 @@ include __DIR__ . '/layout/header.php';
         <div class="admin-alert error"><?= admin_h(implode(' ', $errors)) ?></div>
     <?php endif; ?>
 
-    <form method="post" class="form-card">
+    <form method="post" enctype="multipart/form-data" class="form-card">
         <div class="field">
             <label for="category_id">Nhóm món</label>
             <select id="category_id" name="category_id" required>
@@ -98,15 +127,20 @@ include __DIR__ . '/layout/header.php';
         </div>
         <div class="field">
             <label for="price">Giá bán</label>
-            <input id="price" type="number" min="0" step="1000" name="price" value="<?= admin_h($product['price']) ?>" required>
+            <input id="price" type="number" min="0" step="1000" name="price" value="<?= admin_h($product['price']) ?>"
+                required>
         </div>
         <div class="field">
             <label for="unit">Đơn vị</label>
-            <input id="unit" type="text" name="unit" value="<?= admin_h($product['unit']) ?>" placeholder="tô, ly, phần">
+            <input id="unit" type="text" name="unit" value="<?= admin_h($product['unit']) ?>"
+                placeholder="tô, ly, phần">
         </div>
         <div class="field field--full">
-            <label for="image_url">Ảnh minh họa</label>
-            <input id="image_url" type="text" name="image_url" value="<?= admin_h($product['image_url']) ?>" placeholder="assets/img/hu-tieu.svg">
+            <label for="image_file">Ảnh minh họa</label>
+            <input id="image_file" type="file" name="image_file" accept="image/*">
+            <?php if (!empty($product['image_url'])): ?>
+                <div class="muted">Ảnh hiện tại: <?= admin_h($product['image_url']) ?></div>
+            <?php endif; ?>
         </div>
         <div class="field field--full">
             <label class="checkbox-inline">
@@ -120,4 +154,4 @@ include __DIR__ . '/layout/header.php';
     </form>
 </div>
 
-<?php include __DIR__ . '/layout/footer.php'; ?>
+<?php include_once __DIR__ . '/layout/footer.php'; ?>

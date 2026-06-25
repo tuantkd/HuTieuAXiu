@@ -59,6 +59,27 @@ function admin_scalar($sql, $types = '', array $params = [], $default = 0)
     return $values[0] ?? $default;
 }
 
+function admin_slugify($text)
+{
+    $text = trim((string) $text);
+    if ($text === '') {
+        return '';
+    }
+
+    $text = preg_replace('~[^\\pL\\d]+~u', '-', $text);
+    $text = iconv('UTF-8', 'ASCII//TRANSLIT', $text) ?: $text;
+    $text = preg_replace('~[^-\\w]+~', '', $text);
+    $text = trim($text, '-');
+    $text = preg_replace('~-+~', '-', $text);
+    $text = strtolower($text);
+
+    if ($text === '') {
+        return 'category-' . time();
+    }
+
+    return $text;
+}
+
 function admin_money($amount)
 {
     return number_format((float) $amount, 0, ',', '.') . 'đ';
@@ -75,7 +96,7 @@ function admin_datetime($datetime)
 
 function admin_order_type_label($type)
 {
-    return $type === 'takeaway' ? 'Mang đi' : 'Ăn tại quán';
+    return $type === 'bank_transfer' ? 'Mang đi' : 'Ăn tại quán';
 }
 
 function admin_role_label($role)

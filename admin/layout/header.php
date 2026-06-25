@@ -14,6 +14,7 @@ $menuItems = [
     ['href' => 'pos.php', 'label' => 'POS bán hàng', 'roles' => [ADMIN_ROLE, STAFF_ROLE]],
     ['href' => 'dashboard.php', 'label' => 'Dashboard', 'roles' => [ADMIN_ROLE]],
     ['href' => 'products.php', 'label' => 'Quản lý món', 'roles' => [ADMIN_ROLE]],
+    ['href' => 'categories.php', 'label' => 'Quản lý nhóm món', 'roles' => [ADMIN_ROLE]],
     ['href' => 'orders.php', 'label' => 'Quản lý đơn hàng', 'roles' => [ADMIN_ROLE]],
     ['href' => 'transactions.php', 'label' => 'Thu chi', 'roles' => [ADMIN_ROLE]],
     ['href' => 'report.php', 'label' => 'Báo cáo', 'roles' => [ADMIN_ROLE]],
@@ -42,7 +43,7 @@ $menuItems = [
 
         <nav class="sidebar-menu">
             <?php foreach ($menuItems as $item): ?>
-                <?php if (!in_array(admin_role(), $item['roles'], true)) continue; ?>
+                <?php if (!in_array(admin_role(), $item['roles'], true)) { continue; } ?>
                 <a class="sidebar-link <?= $currentPage === $item['href'] ? 'active' : '' ?>" href="<?= admin_h($item['href']) ?>">
                     <?= admin_h($item['label']) ?>
                 </a>

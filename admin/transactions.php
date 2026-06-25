@@ -7,8 +7,8 @@ require_role(ADMIN_ROLE);
 $page_title = 'Thu chi';
 $today = admin_today();
 $revenueToday = admin_scalar('SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE DATE(created_at) = ?', 's', [$today]);
-$dineInRevenue = admin_scalar('SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE DATE(created_at) = ? AND order_type = ?', 'ss', [$today, 'dine_in']);
-$takeawayRevenue = admin_scalar('SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE DATE(created_at) = ? AND order_type = ?', 'ss', [$today, 'takeaway']);
+$dineInRevenue = admin_scalar('SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE DATE(created_at) = ? AND order_type = ?', 'ss', [$today, 'cash']);
+$takeawayRevenue = admin_scalar('SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE DATE(created_at) = ? AND order_type = ?', 'ss', [$today, 'bank_transfer']);
 $recentCashFlow = admin_fetch_all(
     'SELECT DATE(created_at) AS sale_date, COUNT(*) AS order_count, SUM(total_amount) AS amount
      FROM orders

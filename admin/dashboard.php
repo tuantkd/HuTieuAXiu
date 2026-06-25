@@ -12,7 +12,7 @@ $todayRevenue = admin_scalar('SELECT COALESCE(SUM(total_amount), 0) FROM orders 
 $todayOrders = admin_scalar('SELECT COUNT(*) FROM orders WHERE DATE(created_at) = ?', 's', [$today]);
 $activeProducts = admin_scalar('SELECT COUNT(*) FROM products WHERE is_active = 1');
 $totalUsers = admin_scalar('SELECT COUNT(*) FROM users');
-$takeawayOrders = admin_scalar('SELECT COUNT(*) FROM orders WHERE DATE(created_at) = ? AND order_type = ?', 'ss', [$today, 'takeaway']);
+$takeawayOrders = admin_scalar('SELECT COUNT(*) FROM orders WHERE DATE(created_at) = ? AND order_type = ?', 'ss', [$today, 'bank_transfer']);
 $monthRevenue = admin_scalar('SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE DATE(created_at) >= ?', 's', [$monthStart]);
 
 $recentOrders = admin_fetch_all(

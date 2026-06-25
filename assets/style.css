@@ -15,7 +15,7 @@
 }
 body {
   margin: 0;
-  font-family: Arial, "Helvetica Neue", sans-serif;
+  font-family: 'Roboto', sans-serif;
   background: linear-gradient(180deg, #fff4ea, #fff);
   color: var(--text);
 }
@@ -221,10 +221,15 @@ a {
   background: #fff;
   border-top: 1px solid var(--line);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   padding: 8px 8px 10px;
 }
 .nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   color: #555;
   font-size: 12px;

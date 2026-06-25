@@ -41,7 +41,7 @@ CREATE TABLE orders (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NULL,
   order_code VARCHAR(30) NOT NULL UNIQUE,
-  order_type ENUM('dine_in', 'takeaway') NOT NULL,
+  order_type ENUM('cash', 'bank_transfer') NOT NULL,
   total_amount INT NOT NULL DEFAULT 0,
   note VARCHAR(255) DEFAULT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -104,9 +104,9 @@ INSERT INTO transactions (type, category, amount, note, transaction_date) VALUES
 ('expense', 'Tiền điện nước', 50000, 'Chi phí vận hành', CURDATE());
 
 INSERT INTO orders (user_id, order_code, order_type, total_amount, note, created_at) VALUES
-(1, 'DH0001', 'dine_in', 80000, 'Khách ăn tại quán', NOW() - INTERVAL 1 DAY),
-(2, 'DH0002', 'takeaway', 55000, 'Khách mang đi', NOW() - INTERVAL 2 HOUR),
-(NULL, 'DH0003', 'dine_in', 65000, 'Gọi thêm trà đá', NOW() - INTERVAL 3 HOUR);
+(1, 'DH0001', 'cash', 80000, 'Khách ăn tại quán', NOW() - INTERVAL 1 DAY),
+(2, 'DH0002', 'bank_transfer', 55000, 'Khách mang đi', NOW() - INTERVAL 2 HOUR),
+(NULL, 'DH0003', 'cash', 65000, 'Gọi thêm trà đá', NOW() - INTERVAL 3 HOUR);
 
 INSERT INTO order_items (order_id, product_id, product_name, price, quantity, subtotal) VALUES
 (1, 1, 'Hủ tiếu sườn', 40000, 1, 40000),

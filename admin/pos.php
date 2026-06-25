@@ -8,10 +8,10 @@ $page_title = 'POS bán hàng';
 $errorMessage = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $orderType = $_POST['order_type'] ?? 'dine_in';
+    $orderType = $_POST['order_type'] ?? 'cash';
     $note = trim($_POST['note'] ?? '');
     $cartInput = json_decode($_POST['items_json'] ?? '[]', true);
-    $orderType = in_array($orderType, ['dine_in', 'takeaway'], true) ? $orderType : 'dine_in';
+    $orderType = in_array($orderType, ['cash', 'bank_transfer'], true) ? $orderType : 'cash';
 
     if (!is_array($cartInput) || empty($cartInput)) {
         $errorMessage = 'Vui lòng chọn ít nhất một món trước khi lưu đơn.';
@@ -195,11 +195,11 @@ include __DIR__ . '/layout/header.php';
                     <label>Loại đơn</label>
                     <div class="order-type-grid">
                         <label class="order-type-option">
-                            <input type="radio" name="order_type" value="dine_in" checked>
+                            <input type="radio" name="order_type" value="cash" checked>
                             <span>Ăn tại quán</span>
                         </label>
                         <label class="order-type-option">
-                            <input type="radio" name="order_type" value="takeaway">
+                            <input type="radio" name="order_type" value="bank_transfer">
                             <span>Mang đi</span>
                         </label>
                     </div>
