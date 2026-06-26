@@ -2,7 +2,7 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/helpers.php';
 
-require_role(ADMIN_ROLE);
+requireRole(ADMIN_ROLE);
 
 $userId = (int) ($_GET['id'] ?? 0);
 $isEditing = $userId > 0;
@@ -17,18 +17,18 @@ $user = [
 if ($isEditing) {
     $user = admin_fetch_one('SELECT id, username, full_name, role FROM users WHERE id = ? LIMIT 1', 'i', [$userId]);
     if (!$user) {
-        admin_flash_set('Không tìm thấy tài khoản cần sửa.', 'error');
+        adminFlashSet('Không tìm thấy tài khoản cần sửa.', 'error');
         header('Location: users.php');
         exit;
     }
-    $user['role'] = admin_normalize_role($user['role']);
+    $user['role'] = adminNormalizeRole($user['role']);
 }
 
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user['username'] = trim($_POST['username'] ?? '');
     $user['full_name'] = trim($_POST['full_name'] ?? '');
-    $user['role'] = admin_normalize_role($_POST['role'] ?? STAFF_ROLE);
+    $user['role'] = adminNormalizeRole($_POST['role'] ?? STAFF_ROLE);
     $password = trim($_POST['password'] ?? '');
 
     if ($user['username'] === '') {
@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     [$user['username'], $user['full_name'], $user['role'], $userId]
                 );
             }
-            admin_flash_set('Đã cập nhật tài khoản thành công.', 'success');
+            adminFlashSet('Đã cập nhật tài khoản thành công.', 'success');
         } else {
             $passwordHash = password_hash($password, PASSWORD_DEFAULT);
             admin_execute(
@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'ssss',
                 [$user['username'], $passwordHash, $user['full_name'], $user['role']]
             );
-            admin_flash_set('Đã tạo tài khoản mới thành công.', 'success');
+            adminFlashSet('Đã tạo tài khoản mới thành công.', 'success');
         }
 
         header('Location: users.php');
@@ -87,22 +87,22 @@ include __DIR__ . '/layout/header.php';
 ?>
 <div class="panel">
     <div class="panel-header">
-        <h3><?= admin_h($page_title) ?></h3>
+        <h3><?= adminH($page_title) ?></h3>
         <a class="button light small" href="users.php">Quay lại</a>
     </div>
 
     <?php if ($errors): ?>
-        <div class="admin-alert error"><?= admin_h(implode(' ', $errors)) ?></div>
+        <div class="admin-alert error"><?= adminH(implode(' ', $errors)) ?></div>
     <?php endif; ?>
 
     <form method="post" class="form-card">
         <div class="field">
             <label for="username">Tên đăng nhập</label>
-            <input id="username" type="text" name="username" value="<?= admin_h($user['username']) ?>" required>
+            <input id="username" type="text" name="username" value="<?= adminH($user['username']) ?>" required>
         </div>
         <div class="field">
             <label for="full_name">Họ tên</label>
-            <input id="full_name" type="text" name="full_name" value="<?= admin_h($user['full_name']) ?>" required>
+            <input id="full_name" type="text" name="full_name" value="<?= adminH($user['full_name']) ?>" required>
         </div>
         <div class="field">
             <label for="role">Vai trò</label>

@@ -33,13 +33,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <p class="login-note">Đăng nhập để bán hàng nhanh, quản lý món, theo dõi đơn hàng và báo cáo doanh thu trên XAMPP.</p>
 
         <?php if ($error): ?>
-            <div class="admin-alert error"><?= admin_h($error) ?></div>
+            <div class="admin-alert error"><?= adminH($error) ?></div>
         <?php endif; ?>
 
         <form method="post" class="login-form">
             <div class="field">
                 <label for="username">Tên đăng nhập</label>
-                <input id="username" type="text" name="username" value="<?= admin_h($_POST['username'] ?? '') ?>" placeholder="admin" required>
+                <input id="username" type="text" name="username" value="<?= adminH($_POST['username'] ?? '') ?>" placeholder="admin" required>
             </div>
             <div class="field">
                 <label for="password">Mật khẩu</label>

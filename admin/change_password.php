@@ -2,7 +2,7 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/helpers.php';
 
-require_admin();
+requireAdmin();
 
 $page_title = 'Đổi mật khẩu';
 $errors = [];
@@ -19,14 +19,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (strlen($newPassword) < 6) {
         $errors[] = 'Mật khẩu mới cần tối thiểu 6 ký tự.';
     } else {
-        $row = admin_fetch_one('SELECT password_hash FROM users WHERE id = ? LIMIT 1', 'i', [admin_user_id()]);
+        $row = admin_fetch_one('SELECT password_hash FROM users WHERE id = ? LIMIT 1', 'i', [adminUserId()]);
         if (!$row || !password_verify($currentPassword, $row['password_hash'])) {
             $errors[] = 'Mật khẩu hiện tại không chính xác.';
         } else {
             $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
-            admin_execute('UPDATE users SET password_hash = ? WHERE id = ?', 'si', [$newHash, admin_user_id()]);
-            admin_flash_set('Đổi mật khẩu thành công.', 'success');
-            header('Location: ' . (is_admin() ? 'dashboard.php' : 'pos.php'));
+            admin_execute('UPDATE users SET password_hash = ? WHERE id = ?', 'si', [$newHash, adminUserId()]);
+            adminFlashSet('Đổi mật khẩu thành công.', 'success');
+            header('Location: ' . (isAdmin() ? 'dashboard.php' : 'pos.php'));
             exit;
         }
     }
@@ -41,7 +41,7 @@ include __DIR__ . '/layout/header.php';
     </div>
 
     <?php if ($errors): ?>
-        <div class="admin-alert error"><?= admin_h(implode(' ', $errors)) ?></div>
+        <div class="admin-alert error"><?= adminH(implode(' ', $errors)) ?></div>
     <?php endif; ?>
 
     <form method="post" class="form-card">

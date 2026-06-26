@@ -3,11 +3,11 @@ require_once __DIR__ . '/config.php';
 
 function check_admin_login()
 {
-    if (!is_logged_in()) {
+    if (!isLoggedIn()) {
         return;
     }
 
-    if (is_staff()) {
+    if (isStaff()) {
         header('Location: pos.php');
         exit;
     }
@@ -18,7 +18,7 @@ function check_admin_login()
 
 function login_admin($username, $password)
 {
-    $stmt = admin_prepare('SELECT id, username, password_hash, full_name, role FROM users WHERE username = ? LIMIT 1');
+    $stmt = adminPrepare('SELECT id, username, password_hash, full_name, role FROM users WHERE username = ? LIMIT 1');
     $stmt->bind_param('s', $username);
 
     if (!$stmt->execute()) {
@@ -34,15 +34,15 @@ function login_admin($username, $password)
         return false;
     }
 
-    $user['role'] = admin_normalize_role($user['role']);
-    admin_set_auth_session($user);
+    $user['role'] = adminNormalizeRole($user['role']);
+    adminSetAuthSession($user);
 
     return true;
 }
 
 function logout_admin()
 {
-    admin_clear_auth_session();
+    adminClearAuthSession();
     session_unset();
     session_destroy();
     header('Location: login.php');

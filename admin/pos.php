@@ -2,7 +2,7 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/helpers.php';
 
-require_admin();
+requireAdmin();
 
 $page_title = 'POS bán hàng';
 $errorMessage = '';
@@ -59,11 +59,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             try {
                 $orderCode = admin_generate_order_code();
-                $orderStmt = admin_prepare(
+                $orderStmt = adminPrepare(
                     'INSERT INTO orders (user_id, order_code, order_type, total_amount, note, created_at)
                      VALUES (?, ?, ?, ?, ?, NOW())'
                 );
-                $userId = admin_user_id();
+                $userId = adminUserId();
                 $orderStmt->bind_param('issis', $userId, $orderCode, $orderType, $grandTotal, $note);
                 if (!$orderStmt->execute()) {
                     throw new RuntimeException($orderStmt->error);
@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $orderId = $orderStmt->insert_id;
                 $orderStmt->close();
 
-                $itemStmt = admin_prepare(
+                $itemStmt = adminPrepare(
                     'INSERT INTO order_items (order_id, product_id, product_name, price, quantity, subtotal)
                      VALUES (?, ?, ?, ?, ?, ?)'
                 );
@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $itemStmt->close();
 
                 $conn->commit();
-                admin_flash_set('Lưu đơn ' . $orderCode . ' thành công.', 'success');
+                adminFlashSet('Lưu đơn ' . $orderCode . ' thành công.', 'success');
                 header('Location: pos.php');
                 exit;
             } catch (Throwable $exception) {
@@ -112,7 +112,7 @@ $products = admin_fetch_all(
 );
 $today = admin_today();
 
-if (is_staff()) {
+if (isStaff()) {
     $quickOrders = admin_fetch_all(
         'SELECT id, order_code, order_type, total_amount, created_at
          FROM orders
@@ -120,7 +120,7 @@ if (is_staff()) {
          ORDER BY id DESC
          LIMIT 10',
         'si',
-        [$today, admin_user_id()]
+        [$today, adminUserId()]
     );
 } else {
     $quickOrders = admin_fetch_all(
@@ -139,7 +139,7 @@ define('ADMIN_APP', true);
 include __DIR__ . '/layout/header.php';
 ?>
 <?php if ($errorMessage): ?>
-    <div class="admin-alert error"><?= admin_h($errorMessage) ?></div>
+    <div class="admin-alert error"><?= adminH($errorMessage) ?></div>
 <?php endif; ?>
 
 <div class="panel">
@@ -163,16 +163,16 @@ include __DIR__ . '/layout/header.php';
                         type="button"
                         class="product-card"
                         data-product-id="<?= (int) $product['id'] ?>"
-                        data-product-name="<?= admin_h($product['name']) ?>"
+                        data-product-name="<?= adminH($product['name']) ?>"
                         data-product-price="<?= (int) $product['price'] ?>"
-                        data-search="<?= admin_h(function_exists('mb_strtolower') ? mb_strtolower($product['name'] . ' ' . $product['category_name'], 'UTF-8') : strtolower($product['name'] . ' ' . $product['category_name'])) ?>"
+                        data-search="<?= adminH(function_exists('mb_strtolower') ? mb_strtolower($product['name'] . ' ' . $product['category_name'], 'UTF-8') : strtolower($product['name'] . ' ' . $product['category_name'])) ?>"
                     >
                         <div class="product-thumb">
-                            <img src="<?= admin_h(admin_media_url($product['image_url'])) ?>" alt="<?= admin_h($product['name']) ?>">
+                            <img src="<?= adminH(admin_media_url($product['image_url'])) ?>" alt="<?= adminH($product['name']) ?>">
                         </div>
                         <div class="product-info">
-                            <div class="product-name"><?= admin_h($product['name']) ?></div>
-                            <div class="product-unit"><?= admin_h($product['category_name']) ?> • <?= admin_h($product['unit'] ?: 'phần') ?></div>
+                            <div class="product-name"><?= adminH($product['name']) ?></div>
+                            <div class="product-unit"><?= adminH($product['category_name']) ?> • <?= adminH($product['unit'] ?: 'phần') ?></div>
                             <div class="product-price"><?= admin_money($product['price']) ?></div>
                         </div>
                     </button>
@@ -225,7 +225,7 @@ include __DIR__ . '/layout/header.php';
                     <div>
                         <h4>Đơn vừa bán hôm nay</h4>
                         <div class="helper-text">
-                            <?= is_staff() ? 'Bạn chỉ xem được đơn do chính mình bán.' : 'Admin xem được toàn bộ đơn trong ngày, kể cả đơn chưa gán nhân viên.' ?>
+                            <?= isStaff() ? 'Bạn chỉ xem được đơn do chính mình bán.' : 'Admin xem được toàn bộ đơn trong ngày, kể cả đơn chưa gán nhân viên.' ?>
                         </div>
                     </div>
                 </div>
@@ -237,11 +237,11 @@ include __DIR__ . '/layout/header.php';
                         <?php foreach ($quickOrders as $order): ?>
                             <div class="quick-order-card">
                                 <div>
-                                    <strong><?= admin_h($order['order_code'] ?: ('#' . $order['id'])) ?></strong>
+                                    <strong><?= adminH($order['order_code'] ?: ('#' . $order['id'])) ?></strong>
                                     <div class="product-meta">
-                                        <?= admin_h(admin_order_type_label($order['order_type'])) ?> • <?= admin_h(date('H:i', strtotime($order['created_at']))) ?>
-                                        <?php if (!is_staff()): ?>
-                                            • <?= admin_h(admin_order_seller_label($order)) ?>
+                                        <?= adminH(admin_order_type_label($order['order_type'])) ?> • <?= adminH(date('H:i', strtotime($order['created_at']))) ?>
+                                        <?php if (!isStaff()): ?>
+                                            • <?= adminH(admin_order_seller_label($order)) ?>
                                         <?php endif; ?>
                                     </div>
                                 </div>

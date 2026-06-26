@@ -2,7 +2,7 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/helpers.php';
 
-require_role(ADMIN_ROLE);
+requireRole(ADMIN_ROLE);
 
 $page_title = 'Báo cáo';
 $from = $_GET['from'] ?? date('Y-m-01');
@@ -49,11 +49,11 @@ include __DIR__ . '/layout/header.php';
     <form method="get" class="filters-grid" style="margin-bottom:18px;">
         <div class="field">
             <label for="from">Từ ngày</label>
-            <input id="from" type="date" name="from" value="<?= admin_h($from) ?>">
+            <input id="from" type="date" name="from" value="<?= adminH($from) ?>">
         </div>
         <div class="field">
             <label for="to">Đến ngày</label>
-            <input id="to" type="date" name="to" value="<?= admin_h($to) ?>">
+            <input id="to" type="date" name="to" value="<?= adminH($to) ?>">
         </div>
         <div class="field" style="display:flex;align-items:flex-end;">
             <button type="submit" class="button">Xem báo cáo</button>
@@ -84,7 +84,7 @@ include __DIR__ . '/layout/header.php';
                 <?php foreach ($topProducts as $row): ?>
                     <div class="quick-order-card">
                         <div>
-                            <strong><?= admin_h($row['product_name']) ?></strong>
+                            <strong><?= adminH($row['product_name']) ?></strong>
                             <div class="product-meta"><?= (int) $row['qty'] ?> phần</div>
                         </div>
                         <span class="meta-pill"><?= admin_money($row['amount']) ?></span>
@@ -101,7 +101,7 @@ include __DIR__ . '/layout/header.php';
                 <?php foreach ($sellerStats as $row): ?>
                     <div class="quick-order-card">
                         <div>
-                            <strong><?= admin_h($row['full_name'] ?: $row['username']) ?></strong>
+                            <strong><?= adminH($row['full_name'] ?: $row['username']) ?></strong>
                             <div class="product-meta"><?= (int) $row['order_count'] ?> đơn</div>
                         </div>
                         <span class="meta-pill"><?= admin_money($row['revenue']) ?></span>

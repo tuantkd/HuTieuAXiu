@@ -2,15 +2,15 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/helpers.php';
 
-require_role(ADMIN_ROLE);
+requireRole(ADMIN_ROLE);
 
 if (isset($_GET['delete'])) {
     $deleteId = (int) $_GET['delete'];
-    if ($deleteId > 0 && $deleteId !== admin_user_id()) {
+    if ($deleteId > 0 && $deleteId !== adminUserId()) {
         admin_execute('DELETE FROM users WHERE id = ?', 'i', [$deleteId]);
-        admin_flash_set('Đã xóa tài khoản người dùng.', 'success');
+        adminFlashSet('Đã xóa tài khoản người dùng.', 'success');
     } else {
-        admin_flash_set('Không thể xóa chính tài khoản đang đăng nhập.', 'error');
+        adminFlashSet('Không thể xóa chính tài khoản đang đăng nhập.', 'error');
     }
     header('Location: users.php');
     exit;
@@ -46,22 +46,22 @@ include __DIR__ . '/layout/header.php';
                 <?php foreach ($users as $user): ?>
                     <tr>
                         <td>
-                            <strong><?= admin_h($user['username']) ?></strong>
-                            <?php if ((int) $user['id'] === admin_user_id()): ?>
+                            <strong><?= adminH($user['username']) ?></strong>
+                            <?php if ((int) $user['id'] === adminUserId()): ?>
                                 <div class="product-meta">Tài khoản đang đăng nhập</div>
                             <?php endif; ?>
                         </td>
-                        <td><?= admin_h($user['full_name']) ?></td>
+                        <td><?= adminH($user['full_name']) ?></td>
                         <td>
-                            <span class="badge <?= admin_normalize_role($user['role']) === ADMIN_ROLE ? 'admin' : 'staff' ?>">
-                                <?= admin_h(admin_role_label($user['role'])) ?>
+                            <span class="badge <?= adminNormalizeRole($user['role']) === ADMIN_ROLE ? 'admin' : 'staff' ?>">
+                                <?= adminH(admin_role_label($user['role'])) ?>
                             </span>
                         </td>
-                        <td><?= admin_h(admin_datetime($user['created_at'])) ?></td>
+                        <td><?= adminH(admin_datetime($user['created_at'])) ?></td>
                         <td>
                             <div class="actions">
                                 <a class="button light small" href="user_form.php?id=<?= (int) $user['id'] ?>">Sửa</a>
-                                <?php if ((int) $user['id'] !== admin_user_id()): ?>
+                                <?php if ((int) $user['id'] !== adminUserId()): ?>
                                     <a class="button danger small" href="users.php?delete=<?= (int) $user['id'] ?>" data-confirm="Xóa tài khoản này khỏi hệ thống?">Xóa</a>
                                 <?php endif; ?>
                             </div>

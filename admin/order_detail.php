@@ -2,7 +2,7 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/helpers.php';
 
-require_admin();
+requireAdmin();
 
 $orderId = (int) ($_GET['id'] ?? 0);
 $order = admin_fetch_one(
@@ -15,13 +15,13 @@ $order = admin_fetch_one(
 );
 
 if (!$order) {
-    admin_flash_set('Không tìm thấy đơn hàng.', 'error');
-    header('Location: ' . (is_admin() ? 'orders.php' : 'pos.php'));
+    adminFlashSet('Không tìm thấy đơn hàng.', 'error');
+    header('Location: ' . (isAdmin() ? 'orders.php' : 'pos.php'));
     exit;
 }
 
-if (is_staff() && (int) ($order['user_id'] ?? 0) !== admin_user_id()) {
-    admin_flash_set('Bạn không có quyền xem đơn hàng này.', 'error');
+if (isStaff() && (int) ($order['user_id'] ?? 0) !== adminUserId()) {
+    adminFlashSet('Bạn không có quyền xem đơn hàng này.', 'error');
     header('Location: pos.php');
     exit;
 }
@@ -40,13 +40,13 @@ include __DIR__ . '/layout/header.php';
 <div class="panel">
     <div class="panel-header">
         <div>
-            <h3><?= admin_h($order['order_code'] ?: ('Đơn #' . $orderId)) ?></h3>
+            <h3><?= adminH($order['order_code'] ?: ('Đơn #' . $orderId)) ?></h3>
             <div class="helper-text">
-                <?= admin_h(admin_order_type_label($order['order_type'])) ?> • <?= admin_h(admin_datetime($order['created_at'])) ?>
+                <?= adminH(admin_order_type_label($order['order_type'])) ?> • <?= adminH(admin_datetime($order['created_at'])) ?>
             </div>
         </div>
         <div class="actions">
-            <?php if (is_admin()): ?>
+            <?php if (isAdmin()): ?>
                 <a class="button light small" href="orders.php">Quay lại danh sách</a>
             <?php else: ?>
                 <a class="button light small" href="pos.php">Quay lại POS</a>
@@ -57,7 +57,7 @@ include __DIR__ . '/layout/header.php';
     <div class="info-grid" style="margin-bottom:18px;">
         <div class="card soft">
             <div class="stat-label">Người bán</div>
-            <div class="big-number" style="font-size:1.4rem;"><?= admin_h(admin_order_seller_label($order)) ?></div>
+            <div class="big-number" style="font-size:1.4rem;"><?= adminH(admin_order_seller_label($order)) ?></div>
         </div>
         <div class="card soft">
             <div class="stat-label">Tổng tiền</div>
@@ -67,7 +67,7 @@ include __DIR__ . '/layout/header.php';
 
     <div class="card soft" style="margin-bottom:18px;">
         <div class="stat-label">Ghi chú đơn hàng</div>
-        <div style="margin-top:8px;"><?= admin_h($order['note'] ?: 'Không có ghi chú.') ?></div>
+        <div style="margin-top:8px;"><?= adminH($order['note'] ?: 'Không có ghi chú.') ?></div>
     </div>
 
     <div class="table-wrap">
@@ -83,7 +83,7 @@ include __DIR__ . '/layout/header.php';
             <tbody>
                 <?php foreach ($items as $item): ?>
                     <tr>
-                        <td><?= admin_h($item['product_name']) ?></td>
+                        <td><?= adminH($item['product_name']) ?></td>
                         <td><?= (int) $item['quantity'] ?></td>
                         <td><?= admin_money($item['price']) ?></td>
                         <td><?= admin_money($item['subtotal']) ?></td>

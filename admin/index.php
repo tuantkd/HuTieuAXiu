@@ -1,9 +1,9 @@
 <?php
 require_once __DIR__ . '/config.php';
 
-require_admin();
+requireAdmin();
 
-if (is_staff()) {
+if (isStaff()) {
     header('Location: pos.php');
     exit;
 }

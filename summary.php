@@ -38,7 +38,7 @@ include_once 'header.php'; ?>
             <tr>
                 <td><?= h($i['product_name']) ?></td>
                 <td class="right"><?= $i['qty'] ?></td>
-                <td class="right"><?= money_vnd($i['amount']) ?></td>
+                <td class="right"><?= moneyVND($i['amount']) ?></td>
             </tr><?php endwhile; ?>
     </table><br>
     <div class="between">
@@ -56,7 +56,7 @@ include_once 'header.php'; ?>
     <hr style="border:0;border-top:1px solid #f2dfd2">
     <div class="between">
         <span><b>Tổng doanh thu</b></span>
-        <div class="big-total"><?= money_vnd($total['revenue']) ?></div>
+        <div class="big-total"><?= moneyVND($total['revenue']) ?></div>
     </div>
 </div>
 <?php include_once 'footer.php'; ?>

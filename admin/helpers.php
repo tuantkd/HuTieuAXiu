@@ -12,7 +12,7 @@ function admin_bind_and_execute($stmt, $types = '', array $params = [])
     }
 
     if (!$stmt->execute()) {
-        admin_abort('Lỗi truy vấn cơ sở dữ liệu: ' . $stmt->error, 500);
+        adminAbort('Lỗi truy vấn cơ sở dữ liệu: ' . $stmt->error, 500);
     }
 
     return $stmt;
@@ -20,7 +20,7 @@ function admin_bind_and_execute($stmt, $types = '', array $params = [])
 
 function admin_fetch_all($sql, $types = '', array $params = [])
 {
-    $stmt = admin_prepare($sql);
+    $stmt = adminPrepare($sql);
     admin_bind_and_execute($stmt, $types, $params);
     $result = $stmt->get_result();
     $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
@@ -37,7 +37,7 @@ function admin_fetch_one($sql, $types = '', array $params = [])
 
 function admin_execute($sql, $types = '', array $params = [])
 {
-    $stmt = admin_prepare($sql);
+    $stmt = adminPrepare($sql);
     admin_bind_and_execute($stmt, $types, $params);
     $payload = [
         'insert_id' => $stmt->insert_id,
@@ -66,8 +66,17 @@ function admin_slugify($text)
         return '';
     }
 
+    $utf8Text = @iconv('UTF-8', 'UTF-8//IGNORE', $text);
+    if ($utf8Text !== false && $utf8Text !== '') {
+        $text = $utf8Text;
+    }
+
     $text = preg_replace('~[^\\pL\\d]+~u', '-', $text);
-    $text = iconv('UTF-8', 'ASCII//TRANSLIT', $text) ?: $text;
+    $asciiText = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
+    if ($asciiText !== false && $asciiText !== '') {
+        $text = $asciiText;
+    }
+
     $text = preg_replace('~[^-\\w]+~', '', $text);
     $text = trim($text, '-');
     $text = preg_replace('~-+~', '-', $text);
@@ -101,12 +110,138 @@ function admin_order_type_label($type)
 
 function admin_role_label($role)
 {
-    return admin_normalize_role($role) === ADMIN_ROLE ? 'Admin' : 'Nhân viên';
+    return adminNormalizeRole($role) === ADMIN_ROLE ? 'Admin' : 'Nhân viên';
 }
 
 function admin_today()
 {
     return date('Y-m-d');
+}
+
+function admin_is_valid_date($date)
+{
+    return is_string($date) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) === 1;
+}
+
+function admin_max_iso_date(...$dates)
+{
+    $validDates = array_values(array_filter($dates, 'admin_is_valid_date'));
+    if (empty($validDates)) {
+        return null;
+    }
+
+    sort($validDates);
+    return $validDates[count($validDates) - 1];
+}
+
+function admin_string_contains_keyword($value, array $keywords)
+{
+    foreach ($keywords as $keyword) {
+        if ($keyword !== '' && strpos($value, $keyword) !== false) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function admin_transaction_keyword_source(array $transaction)
+{
+    return admin_slugify(
+        trim((string) ($transaction['category'] ?? '')) . ' ' . trim((string) ($transaction['note'] ?? ''))
+    );
+}
+
+function admin_is_ingredient_expense(array $transaction)
+{
+    if (($transaction['type'] ?? '') !== 'expense') {
+        return false;
+    }
+
+    $source = admin_transaction_keyword_source($transaction);
+    if ($source === '') {
+        return false;
+    }
+
+    $nonIngredientKeywords = [
+        'dien',
+        'nuoc',
+        'gas',
+        'internet',
+        'luong',
+        'thue',
+        'van-phong',
+        'van-chuyen',
+        'ship',
+        'giao-hang',
+        'sua-chua',
+        'bao-tri',
+        'khuyen-mai',
+        'quang-cao',
+        'marketing',
+        'thiet-bi',
+        'ban-ghe',
+        'may-moc',
+        'bao-hiem',
+    ];
+
+    if (admin_string_contains_keyword($source, $nonIngredientKeywords)) {
+        return false;
+    }
+
+    $ingredientKeywords = [
+        'nguyen-lieu',
+        'rau',
+        'cu',
+        'xa-lach',
+        'thit',
+        'tom',
+        'ca',
+        'muc',
+        'ga',
+        'heo',
+        'bo',
+        'xuong',
+        'gio',
+        'cha',
+        'trung',
+        'bun',
+        'mi',
+        'gao',
+        'pho',
+        'hu-tieu',
+        'hanh',
+        'toi',
+        'ot',
+        'gia-vi',
+        'nuoc-mam',
+        'duong',
+        'muoi',
+        'dau-an',
+        'rau-thom',
+    ];
+
+    return strpos($source, 'mua-') === 0 || admin_string_contains_keyword($source, $ingredientKeywords);
+}
+
+function admin_is_sales_income(array $transaction)
+{
+    if (($transaction['type'] ?? '') !== 'income') {
+        return false;
+    }
+
+    $source = admin_transaction_keyword_source($transaction);
+    if ($source === '') {
+        return false;
+    }
+
+    return admin_string_contains_keyword($source, [
+        'ban-hang',
+        'doanh-thu',
+        'don-hang',
+        'thu-tien-ban',
+        'ban-truc-tiep',
+    ]);
 }
 
 function admin_order_seller_label(array $order)

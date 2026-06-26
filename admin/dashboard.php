@@ -2,7 +2,7 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/helpers.php';
 
-require_role(ADMIN_ROLE);
+requireRole(ADMIN_ROLE);
 
 $page_title = 'Dashboard';
 $today = admin_today();
@@ -69,7 +69,7 @@ include __DIR__ . '/layout/header.php';
             </div>
             <div class="card soft">
                 <div class="stat-label">Ngày hiện tại</div>
-                <div class="big-number"><?= admin_h(date('d/m/Y')) ?></div>
+                <div class="big-number"><?= adminH(date('d/m/Y')) ?></div>
             </div>
         </div>
         <div class="helper-text">Schema admin đã map chung về `database.sql`, không còn tách cấu trúc dữ liệu riêng.</div>
@@ -86,7 +86,7 @@ include __DIR__ . '/layout/header.php';
                 <?php foreach ($bestProducts as $product): ?>
                     <div class="quick-order-card">
                         <div>
-                            <strong><?= admin_h($product['product_name']) ?></strong>
+                            <strong><?= adminH($product['product_name']) ?></strong>
                             <div class="product-meta"><?= (int) $product['qty'] ?> phần đã bán</div>
                         </div>
                         <span class="meta-pill"><?= admin_money($product['amount']) ?></span>
@@ -115,10 +115,10 @@ include __DIR__ . '/layout/header.php';
                 <tbody>
                     <?php foreach ($recentOrders as $order): ?>
                         <tr>
-                            <td><?= admin_h($order['order_code'] ?: ('#' . $order['id'])) ?></td>
-                            <td><?= admin_h(admin_order_seller_label($order)) ?></td>
-                            <td><?= admin_h(admin_order_type_label($order['order_type'])) ?></td>
-                            <td><?= admin_h(admin_datetime($order['created_at'])) ?></td>
+                            <td><?= adminH($order['order_code'] ?: ('#' . $order['id'])) ?></td>
+                            <td><?= adminH(admin_order_seller_label($order)) ?></td>
+                            <td><?= adminH(admin_order_type_label($order['order_type'])) ?></td>
+                            <td><?= adminH(admin_datetime($order['created_at'])) ?></td>
                             <td><?= admin_money($order['total_amount']) ?></td>
                             <td><a class="button light small" href="order_detail.php?id=<?= (int) $order['id'] ?>">Chi tiết</a></td>
                         </tr>

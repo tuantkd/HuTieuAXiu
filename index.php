@@ -1,6 +1,7 @@
 <?php
 require_once 'config/db.php';
 require_once 'config/helpers.php';
+requireLogin();
 
 if (isset($_POST['add_product_id'])) {
     $pid = (int) $_POST['add_product_id'];
@@ -47,7 +48,7 @@ while ($r = $categoryStats->fetch_assoc()) {
 
 include_once 'header.php'; ?>
 
-<div class="date">📅 Hôm nay: <?= today_vi() ?></div>
+<div class="date">📅 Hôm nay: <?= todayVi() ?></div>
 <div class="section-title">Chọn loại sản phẩm</div>
 <div class="tabs">
     <a class="tab <?= $filter === 'all' ? 'active' : '' ?>" href="index.php">Tất cả</a>
@@ -63,7 +64,7 @@ include_once 'header.php'; ?>
         <form method="post" class="product">
             <img src="<?= h($p['image_url']) ?>" alt="<?= h($p['name']) ?>" class="product-image">
             <div class="p"><b><?= h($p['name']) ?></b>
-                <div class="price"><?= money_vnd($p['price']) ?></div>
+                <div class="price"><?= moneyVND($p['price']) ?></div>
                 <input type="hidden" name="add_product_id" value="<?= $p['id'] ?>">
                 <input type="hidden" name="quantity" value="1">
                 <button class="btn btn-light full" style="margin-top:8px">+ Thêm</button>
@@ -91,7 +92,7 @@ include_once 'header.php'; ?>
     </div>
     <hr style="border:0;border-top:1px solid #f2dfd2">
     <div class="between"><b>Doanh thu</b>
-        <div class="big-total"><?= money_vnd($sum['revenue']) ?></div>
+        <div class="big-total"><?= moneyVND($sum['revenue']) ?></div>
     </div>
 </div>
 <?php include_once 'footer.php'; ?>

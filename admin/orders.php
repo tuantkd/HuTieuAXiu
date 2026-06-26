@@ -2,7 +2,7 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/helpers.php';
 
-require_role(ADMIN_ROLE);
+requireRole(ADMIN_ROLE);
 
 $page_title = 'Quản lý đơn hàng';
 $date = $_GET['date'] ?? admin_today();
@@ -42,7 +42,7 @@ include __DIR__ . '/layout/header.php';
     <form method="get" class="filters-grid" style="margin-bottom:18px;">
         <div class="field">
             <label for="date">Ngày bán</label>
-            <input id="date" type="date" name="date" value="<?= admin_h($date) ?>">
+            <input id="date" type="date" name="date" value="<?= adminH($date) ?>">
         </div>
         <div class="field">
             <label for="order_type">Loại đơn</label>
@@ -81,12 +81,12 @@ include __DIR__ . '/layout/header.php';
                 <?php else: ?>
                     <?php foreach ($orders as $order): ?>
                         <tr>
-                            <td><?= admin_h($order['order_code'] ?: ('#' . $order['id'])) ?></td>
-                            <td><?= admin_h(admin_order_seller_label($order)) ?></td>
-                            <td><?= admin_h(admin_order_type_label($order['order_type'])) ?></td>
+                            <td><?= adminH($order['order_code'] ?: ('#' . $order['id'])) ?></td>
+                            <td><?= adminH(admin_order_seller_label($order)) ?></td>
+                            <td><?= adminH(admin_order_type_label($order['order_type'])) ?></td>
                             <td><?= (int) $order['item_count'] ?></td>
-                            <td><?= admin_h($order['note'] ?: '-') ?></td>
-                            <td><?= admin_h(admin_datetime($order['created_at'])) ?></td>
+                            <td><?= adminH($order['note'] ?: '-') ?></td>
+                            <td><?= adminH(admin_datetime($order['created_at'])) ?></td>
                             <td><?= admin_money($order['total_amount']) ?></td>
                             <td><a class="button light small" href="order_detail.php?id=<?= (int) $order['id'] ?>">Chi tiết</a></td>
                         </tr>

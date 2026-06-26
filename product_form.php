@@ -1,6 +1,7 @@
 <?php
 require_once 'config/db.php';
 require_once 'config/helpers.php';
+requireLogin();
 require_non_staff();
 
 $id = (int) ($_GET['id'] ?? 0);

@@ -1,6 +1,7 @@
 <?php
 require_once 'config/db.php';
 require_once 'config/helpers.php';
+requireLogin();
 
 if (isset($_GET['remove'])) {
     unset($_SESSION['cart'][(int) $_GET['remove']]);
@@ -33,8 +34,8 @@ if (isset($_POST['ajax_update_qty'])) {
         'removed' => $qty === 0,
         'empty' => empty($_SESSION['cart']),
         'quantity' => $item['quantity'] ?? 0,
-        'line_total' => money_vnd($lineTotal),
-        'cart_total' => money_vnd(cart_total()),
+        'line_total' => moneyVND($lineTotal),
+        'cart_total' => moneyVND(cart_total()),
         'cart_count' => cart_count()
     ], JSON_UNESCAPED_UNICODE);
     exit;
@@ -62,9 +63,10 @@ if (isset($_POST['save_order'])) {
     $total = cart_total();
     $code = 'AX' . date('YmdHis');
     $note = $_POST['note'] ?? '';
+    $userId = (int) ($_SESSION['user_id'] ?? 0);
 
-    $stmt = $conn->prepare("INSERT INTO orders(order_code,order_type,total_amount,note) VALUES(?,?,?,?)");
-    $stmt->bind_param('ssis', $code, $type, $total, $note);
+    $stmt = $conn->prepare("INSERT INTO orders(user_id,order_code,order_type,total_amount,note) VALUES(?,?,?,?,?)");
+    $stmt->bind_param('issis', $userId, $code, $type, $total, $note);
     $stmt->execute();
     $oid = $stmt->insert_id;
 
@@ -94,7 +96,7 @@ include_once 'header.php'; ?>
         <div id="cart-list"><?php foreach ($_SESSION['cart'] as $it): ?>
                 <div class="cart-item"><img src="<?= h($it['image_url']) ?>" alt="<?= h($it['name']) ?>" class="cart-image">
                     <div><b><?= h($it['name']) ?></b>
-                        <div class="price"><?= money_vnd($it['price']) ?></div><a class="small danger"
+                        <div class="price"><?= moneyVND($it['price']) ?></div><a class="small danger"
                             href="?remove=<?= $it['id'] ?>">Xóa</a>
                     </div>
                     <div class="cart-qty-box" data-id="<?= $it['id'] ?>" data-price="<?= $it['price'] ?>">
@@ -107,7 +109,7 @@ include_once 'header.php'; ?>
                                 aria-label="Tăng số lượng">+</button>
                         </div>
                         <div class="right small cart-line-total">
-                            <?= money_vnd($it['price'] * $it['quantity']) ?>
+                            <?= moneyVND($it['price'] * $it['quantity']) ?>
                         </div>
                     </div>
                 </div><?php endforeach; ?>
@@ -126,7 +128,7 @@ include_once 'header.php'; ?>
             </div>
             <input class="input" name="note" placeholder="Ghi chú nếu có"><br><br>
             <div class="between"><b>Tổng tiền</b>
-                <div class="big-total js-cart-total"><?= money_vnd(cart_total()) ?></div>
+                <div class="big-total js-cart-total"><?= moneyVND(cart_total()) ?></div>
             </div>
             <br><button class="btn btn-red full" name="save_order" value="1">Xác nhận & Lưu đơn</button>
         </form>

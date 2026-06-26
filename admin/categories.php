@@ -2,17 +2,17 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/helpers.php';
 
-require_role(ADMIN_ROLE);
+requireRole(ADMIN_ROLE);
 
 if (isset($_GET['delete'])) {
     $deleteId = (int) $_GET['delete'];
     if ($deleteId > 0) {
         $productCount = admin_scalar('SELECT COUNT(*) FROM products WHERE category_id = ?', 'i', [$deleteId]);
         if ($productCount > 0) {
-            admin_flash_set('Không thể xóa nhóm món này vì vẫn còn món trong nhóm.', 'error');
+            adminFlashSet('Không thể xóa nhóm món này vì vẫn còn món trong nhóm.', 'error');
         } else {
             admin_execute('DELETE FROM categories WHERE id = ?', 'i', [$deleteId]);
-            admin_flash_set('Đã xóa nhóm món thành công.', 'success');
+            adminFlashSet('Đã xóa nhóm món thành công.', 'success');
         }
     }
 
@@ -49,10 +49,10 @@ include_once __DIR__ . '/layout/header.php';
                 <?php foreach ($categories as $category): ?>
                     <tr>
                         <td>
-                            <strong><?= admin_h($category['name']) ?></strong>
+                            <strong><?= adminH($category['name']) ?></strong>
                         </td>
-                        <td><?= admin_h($category['slug']) ?></td>
-                        <td><?= admin_h($category['sort_order']) ?></td>
+                        <td><?= adminH($category['slug']) ?></td>
+                        <td><?= adminH($category['sort_order']) ?></td>
                         <td>
                             <div class="actions">
                                 <a class="button light small"
