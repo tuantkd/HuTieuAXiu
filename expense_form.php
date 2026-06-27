@@ -1,6 +1,9 @@
 <?php
 require_once 'config/db.php';
 require_once 'config/helpers.php';
+if (!defined('EXPENSE_DATE_URL')) {
+    define('EXPENSE_DATE_URL', 'expense.php?date=');
+}
 requireLogin();
 require_non_staff();
 
@@ -35,15 +38,25 @@ function expenseFormFetchOne($conn, $sql, $types, array $params)
 $expenseId = (int) ($_GET['id'] ?? 0);
 $requestedDate = $_GET['date'] ?? today();
 $defaultDate = expenseFormIsValidDate($requestedDate) ? $requestedDate : today();
+$isEditing = $expenseId > 0;
+$error = '';
+$errorItems = [];
 $expense = [
     'category' => '',
     'amount' => '',
     'note' => '',
     'transaction_date' => $defaultDate,
 ];
-$error = '';
+$expenseRows = [
+    [
+        'category' => '',
+        'amount' => '',
+        'note' => '',
+        'transaction_date' => $defaultDate,
+    ]
+];
 
-if ($expenseId > 0) {
+if ($isEditing) {
     $loadedExpense = expenseFormFetchOne(
         $conn,
         "SELECT id, category, amount, note, transaction_date
@@ -55,54 +68,136 @@ if ($expenseId > 0) {
     );
 
     if (!$loadedExpense) {
-        redirect('expense.php?date=' . rawurlencode($defaultDate));
+        redirect(EXPENSE_DATE_URL . rawurlencode($defaultDate));
     }
 
     $expense = $loadedExpense;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $category = trim((string) ($_POST['category'] ?? ''));
-    $amount = (int) ($_POST['amount'] ?? 0);
-    $transactionDate = $_POST['transaction_date'] ?? today();
-    $note = trim((string) ($_POST['note'] ?? ''));
+    if ($isEditing) {
+        $category = trim((string) ($_POST['category'] ?? ''));
+        $amount = (int) ($_POST['amount'] ?? 0);
+        $transactionDate = $_POST['transaction_date'] ?? today();
+        $note = trim((string) ($_POST['note'] ?? ''));
 
-    $expense['category'] = $category;
-    $expense['amount'] = $amount > 0 ? $amount : ($_POST['amount'] ?? '');
-    $expense['transaction_date'] = expenseFormIsValidDate($transactionDate) ? $transactionDate : today();
-    $expense['note'] = $note;
+        $expense['category'] = $category;
+        $expense['amount'] = $amount > 0 ? $amount : ($_POST['amount'] ?? '');
+        $expense['transaction_date'] = expenseFormIsValidDate($transactionDate) ? $transactionDate : today();
+        $expense['note'] = $note;
 
-    if ($category === '') {
-        $error = 'Vui lòng nhập hạng mục chi phí.';
-    } elseif ($amount <= 0) {
-        $error = 'Số tiền phải lớn hơn 0.';
-    }
+        if ($category === '') {
+            $error = 'Vui lòng nhập hạng mục chi phí.';
+        } elseif ($amount <= 0) {
+            $error = 'Số tiền phải lớn hơn 0.';
+        }
 
-    if ($error === '') {
-        if ($expenseId > 0) {
+        if ($error === '') {
             $stmt = $conn->prepare(
                 "UPDATE transactions
                  SET category = ?, amount = ?, note = ?, transaction_date = ?
                  WHERE id = ? AND type = 'expense'"
             );
+
             if ($stmt) {
                 $stmt->bind_param('sissi', $category, $amount, $note, $expense['transaction_date'], $expenseId);
                 $stmt->execute();
                 $stmt->close();
             }
+
+            redirect(EXPENSE_DATE_URL . rawurlencode($expense['transaction_date']));
+        }
+    } else {
+        $categories = $_POST['category'] ?? [];
+        $amounts = $_POST['amount'] ?? [];
+        $notes = $_POST['note'] ?? [];
+        $transactionDates = $_POST['transaction_date'] ?? [];
+        $rowCount = max(count((array) $categories), count((array) $amounts), count((array) $notes), count((array) $transactionDates));
+        $expenseRows = [];
+        $hasAtLeastOneRow = false;
+
+        for ($index = 0; $index < $rowCount; $index++) {
+            $category = trim((string) ($categories[$index] ?? ''));
+            $amountRaw = trim((string) ($amounts[$index] ?? ''));
+            $amount = (int) $amountRaw;
+            $note = trim((string) ($notes[$index] ?? ''));
+            $transactionDateRaw = trim((string) ($transactionDates[$index] ?? $defaultDate));
+            $transactionDate = expenseFormIsValidDate($transactionDateRaw) ? $transactionDateRaw : $defaultDate;
+
+            $row = [
+                'category' => $category,
+                'amount' => $amountRaw,
+                'note' => $note,
+                'transaction_date' => $transactionDate,
+            ];
+
+            if ($category === '' && $amountRaw === '' && $note === '') {
+                continue;
+            }
+
+            $hasAtLeastOneRow = true;
+            $expenseRows[] = $row;
+
+            if ($category === '') {
+                $errorItems[] = 'Khoản chi #' . ($index + 1) . ' chưa có hạng mục.';
+            }
+
+            if ($amount <= 0) {
+                $errorItems[] = 'Khoản chi #' . ($index + 1) . ' phải có số tiền lớn hơn 0.';
+            }
+        }
+
+        if (!$hasAtLeastOneRow) {
+            $error = 'Vui lòng nhập ít nhất một khoản chi trước khi lưu.';
+        } elseif (!empty($errorItems)) {
+            $error = 'Vui lòng kiểm tra lại các khoản chi bên dưới.';
         } else {
             $stmt = $conn->prepare(
                 "INSERT INTO transactions (type, category, amount, note, transaction_date)
                  VALUES ('expense', ?, ?, ?, ?)"
             );
-            if ($stmt) {
-                $stmt->bind_param('siss', $category, $amount, $note, $expense['transaction_date']);
-                $stmt->execute();
+
+            if (!$stmt) {
+                $error = 'Không thể lưu chi phí lúc này. Vui lòng thử lại.';
+            } else {
+                $conn->begin_transaction();
+                $savedDate = $defaultDate;
+                $saveOk = true;
+
+                foreach ($expenseRows as $row) {
+                    $category = $row['category'];
+                    $amount = (int) $row['amount'];
+                    $note = $row['note'];
+                    $transactionDate = $row['transaction_date'];
+                    $savedDate = $transactionDate;
+
+                    $stmt->bind_param('siss', $category, $amount, $note, $transactionDate);
+                    if (!$stmt->execute()) {
+                        $saveOk = false;
+                        break;
+                    }
+                }
+
+                if ($saveOk) {
+                    $conn->commit();
+                    $stmt->close();
+                    redirect(EXPENSE_DATE_URL . rawurlencode($savedDate));
+                }
+
+                $conn->rollback();
                 $stmt->close();
+                $error = 'Lưu chi phí chưa thành công. Vui lòng thử lại.';
             }
         }
 
-        redirect('expense.php?date=' . rawurlencode($expense['transaction_date']));
+        if (empty($expenseRows)) {
+            $expenseRows[] = [
+                'category' => '',
+                'amount' => '',
+                'note' => '',
+                'transaction_date' => $defaultDate,
+            ];
+        }
     }
 }
 
@@ -122,74 +217,241 @@ $quickCategories = [
 include_once 'header.php';
 ?>
 
-<div class="date"><?= $expenseId > 0 ? '✏️ Sửa phiếu chi' : '🧾 Nhập chi phí mới' ?></div>
+<div class="date"><?= $isEditing ? '✏️ Sửa phiếu chi' : '🧾 Nhập nhiều chi phí' ?></div>
 
 <?php if ($error !== ''): ?>
-    <div class="card" style="border-color:#f3c3c3;background:#fff1f1;color:#9f2525;"><?= h($error) ?></div>
+    <div class="card" style="border-color:#f3c3c3;background:#fff1f1;color:#9f2525;">
+        <div><?= h($error) ?></div>
+        <?php if (!empty($errorItems)): ?>
+            <div class="expense-error-list">
+                <?php foreach ($errorItems as $item): ?>
+                    <div><?= h($item) ?></div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </div>
 <?php endif; ?>
 
-<form method="post" class="card expense-form">
-    <div>
-        <div class="section-title" style="margin:0 0 6px;">Nhập nhanh trên điện thoại</div>
-        <div class="small">Chạm vào hạng mục gợi ý hoặc nhập trực tiếp để lưu phiếu chi nhanh hơn.</div>
-    </div>
+<?php if ($isEditing): ?>
+    <form method="post" class="card expense-form">
+        <div>
+            <div class="section-title" style="margin:0 0 6px;">Cập nhật phiếu chi</div>
+            <div class="small">Chỉnh lại thông tin của một phiếu chi đã lưu.</div>
+        </div>
 
-    <div class="field-block">
-        <label class="form-label" for="category">Hạng mục chi phí</label>
-        <input class="input" id="category" name="category" list="expense-category-list"
-            placeholder="Ví dụ: Nguyên liệu, rau củ..." value="<?= h($expense['category']) ?>" required>
         <datalist id="expense-category-list">
             <?php foreach ($quickCategories as $category): ?>
                 <option value="<?= h($category) ?>"></option>
             <?php endforeach; ?>
         </datalist>
+
+        <div class="field-block">
+            <label class="form-label" for="category">Hạng mục chi phí</label>
+            <input class="input" id="category" name="category" list="expense-category-list"
+                placeholder="Ví dụ: Nguyên liệu, rau củ..." value="<?= h($expense['category']) ?>" required>
+        </div>
+
+        <div class="field-row">
+            <div class="field-block">
+                <label class="form-label" for="amount">Số tiền</label>
+                <input class="input" id="amount" type="number" name="amount" min="1000" step="1000" inputmode="numeric"
+                    placeholder="Ví dụ: 150000" value="<?= h((string) $expense['amount']) ?>" required>
+            </div>
+
+            <div class="field-block">
+                <label class="form-label" for="transaction_date">Ngày chi</label>
+                <input class="input" id="transaction_date" type="date" name="transaction_date"
+                    value="<?= h($expense['transaction_date']) ?>" required>
+            </div>
+        </div>
+
+        <div class="field-block">
+            <label class="form-label" for="note">Ghi chú</label>
+            <textarea class="input expense-textarea" id="note" name="note"
+                placeholder="Ghi thêm số lượng, nơi mua hoặc nội dung cần nhớ..."><?= h($expense['note']) ?></textarea>
+        </div>
+
         <div class="quick-grid">
             <?php foreach ($quickCategories as $category): ?>
                 <button type="button" class="quick-pill"
-                    data-fill-category="<?= h($category) ?>"><?= h($category) ?></button>
+                    data-fill-single-category="<?= h($category) ?>"><?= h($category) ?></button>
             <?php endforeach; ?>
         </div>
-    </div>
 
-    <div class="field-row">
-        <div class="field-block">
-            <label class="form-label" for="amount">Số tiền</label>
-            <input class="input" id="amount" type="number" name="amount" min="1000" step="1000" inputmode="numeric"
-                placeholder="Ví dụ: 150000" value="<?= h((string) $expense['amount']) ?>" required>
+        <div class="expense-form-actions">
+            <button class="btn btn-red full" type="submit">Lưu thay đổi</button>
+            <a class="btn btn-light full" href="expense.php?date=<?= h($expense['transaction_date']) ?>">
+                <i class="fa fa-arrow-left"></i> Quay lại danh sách chi phí
+            </a>
+        </div>
+    </form>
+<?php else: ?>
+    <form method="post" class="card expense-form">
+        <div class="expense-form-header">
+            <div>
+                <div class="section-title" style="margin:0 0 6px;">Nhập nhiều khoản chi cùng lúc</div>
+                <div class="small">Bạn có thể thêm nhiều dòng chi phí, nhập xong hết rồi bấm lưu một lần.</div>
+            </div>
         </div>
 
-        <div class="field-block">
-            <label class="form-label" for="transaction_date">Ngày chi</label>
-            <input class="input" id="transaction_date" type="date" name="transaction_date"
-                value="<?= h($expense['transaction_date']) ?>" required>
+        <datalist id="expense-category-list">
+            <?php foreach ($quickCategories as $category): ?>
+                <option value="<?= h($category) ?>"></option>
+            <?php endforeach; ?>
+        </datalist>
+
+        <div class="expense-entry-list" data-expense-rows>
+            <?php foreach ($expenseRows as $index => $row): ?>
+                <div class="expense-entry-card">
+                    <div class="expense-entry-header">
+                        <b data-row-title>Khoản chi #<?= $index + 1 ?></b>
+                        <button type="button" class="expense-inline-btn danger" data-remove-expense-row>Xóa khoản chi</button>
+                    </div>
+
+                    <div class="field-block">
+                        <label class="sr-only" for="category-<?= $index ?>">Hạng mục chi phí</label>
+                        <input class="input" id="category-<?= $index ?>" name="category[]" list="expense-category-list"
+                            placeholder="Tên hạng mục..." value="<?= h($row['category']) ?>">
+                    </div>
+
+                    <div class="quick-grid">
+                        <?php foreach ($quickCategories as $category): ?>
+                            <button type="button" class="quick-pill"
+                                data-fill-category="<?= h($category) ?>"><?= h($category) ?></button>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <div class="field-row">
+                        <div class="field-block">
+                            <label class="form-label" for="amount-<?= $index ?>">Số tiền</label>
+                            <input class="input" type="number" id="amount-<?= $index ?>" name="amount[]" min="1000" step="1000"
+                                inputmode="numeric" placeholder="Ví dụ: 150000" value="<?= h((string) $row['amount']) ?>">
+                        </div>
+
+                        <div class="field-block">
+                            <label class="form-label" for="transaction-date-<?= $index ?>">Ngày chi</label>
+                            <input class="input" type="date" id="transaction-date-<?= $index ?>" name="transaction_date[]"
+                                value="<?= h($row['transaction_date']) ?>">
+                        </div>
+                    </div>
+
+                    <div class="field-block">
+                        <label class="form-label" for="note-<?= $index ?>">Ghi chú</label>
+                        <textarea class="input expense-textarea" id="note-<?= $index ?>" name="note[]"
+                            placeholder="Ghi thêm số lượng, nơi mua hoặc nội dung cần nhớ..."><?= h($row['note']) ?></textarea>
+                    </div>
+                </div>
+            <?php endforeach; ?>
         </div>
-    </div>
-
-    <div class="field-block">
-        <label class="form-label" for="note">Ghi chú</label>
-        <textarea class="input expense-textarea" id="note" name="note"
-            placeholder="Ghi thêm số lượng, nơi mua hoặc nội dung cần nhớ..."><?= h($expense['note']) ?></textarea>
-    </div>
-
-    <div class="expense-form-actions">
-        <button class="btn btn-red full" type="submit"><?= $expenseId > 0 ? 'Lưu thay đổi' : 'Lưu chi phí' ?></button>
-        <a class="btn btn-light full" href="expense.php?date=<?= h($expense['transaction_date']) ?>">
-            <i class="fa fa-arrow-left"></i> Quay lại danh sách chi phí
-        </a>
-    </div>
-</form>
+        <button type="button" class="btn btn-light full-mobile" data-add-expense-row>+ Thêm khoản chi</button>
+        <br>
+        <div class="expense-form-actions">
+            <button class="btn btn-red full" type="submit">Lưu tất cả chi phí</button>
+            <a class="btn btn-light full" href="expense.php?date=<?= h($defaultDate) ?>">
+                <i class="fa fa-arrow-left"></i> Quay lại danh sách
+            </a>
+        </div>
+    </form>
+<?php endif; ?>
 
 <script>
-    document.querySelectorAll('[data-fill-category]').forEach(function (button) {
-        button.addEventListener('click', function () {
-            var input = document.getElementById('category');
-            if (!input) {
+    (function () {
+        document.querySelectorAll('[data-fill-single-category]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                var input = document.getElementById('category');
+                if (!input) {
+                    return;
+                }
+                input.value = button.getAttribute('data-fill-single-category') || '';
+                input.focus();
+            });
+        });
+
+        var rowsContainer = document.querySelector('[data-expense-rows]');
+        var addRowButton = document.querySelector('[data-add-expense-row]');
+
+        if (!rowsContainer || !addRowButton) {
+            return;
+        }
+
+        function refreshRowState() {
+            var cards = rowsContainer.querySelectorAll('.expense-entry-card');
+            cards.forEach(function (card, index) {
+                var title = card.querySelector('[data-row-title]');
+                var removeButton = card.querySelector('[data-remove-expense-row]');
+
+                if (title) {
+                    title.textContent = 'Khoản chi #' + (index + 1);
+                }
+
+                if (removeButton) {
+                    removeButton.style.display = cards.length > 1 ? 'inline-flex' : 'none';
+                }
+            });
+        }
+
+        function bindCategoryPills(scope) {
+            scope.querySelectorAll('[data-fill-category]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    var card = button.closest('.expense-entry-card');
+                    var input = card ? card.querySelector('input[name="category[]"]') : null;
+                    if (!input) {
+                        return;
+                    }
+                    input.value = button.getAttribute('data-fill-category') || '';
+                    input.focus();
+                });
+            });
+        }
+
+        bindCategoryPills(rowsContainer);
+        refreshRowState();
+
+        addRowButton.addEventListener('click', function () {
+            var cards = rowsContainer.querySelectorAll('.expense-entry-card');
+            var sourceCard = cards[cards.length - 1];
+            if (!sourceCard) {
                 return;
             }
-            input.value = button.getAttribute('data-fill-category') || '';
-            input.focus();
+
+            var clonedCard = sourceCard.cloneNode(true);
+            clonedCard.querySelectorAll('input, textarea').forEach(function (field) {
+                if (field.name === 'transaction_date[]') {
+                    field.value = sourceCard.querySelector('input[name="transaction_date[]"]').value;
+                    return;
+                }
+
+                field.value = '';
+            });
+
+            rowsContainer.appendChild(clonedCard);
+            bindCategoryPills(clonedCard);
+            refreshRowState();
+
+            var categoryInput = clonedCard.querySelector('input[name="category[]"]');
+            if (categoryInput) {
+                categoryInput.focus();
+            }
         });
-    });
+
+        rowsContainer.addEventListener('click', function (event) {
+            var removeButton = event.target.closest('[data-remove-expense-row]');
+            if (!removeButton) {
+                return;
+            }
+
+            var cards = rowsContainer.querySelectorAll('.expense-entry-card');
+            if (cards.length <= 1) {
+                return;
+            }
+
+            var card = removeButton.closest('.expense-entry-card');
+            if (card) {
+                card.remove();
+                refreshRowState();
+            }
+        });
+    })();
 </script>
 
 <?php include_once 'footer.php'; ?>

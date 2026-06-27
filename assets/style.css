@@ -144,6 +144,8 @@ a {
   color: #222;
   border: 1px solid var(--line);
   font-family: "Roboto";
+  align-items: center;
+  text-align: center;
 }
 .full {
   width: 100%;
@@ -490,23 +492,65 @@ select {
   gap: 16px;
 }
 
+.expense-form-header {
+  display: grid;
+  gap: 12px;
+}
+
+.expense-entry-list {
+  display: grid;
+  gap: 14px;
+}
+
+.expense-entry-card {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid #f3e2d6;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fffdfa, #fff6ef);
+}
+
+.expense-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.expense-inline-btn {
+  border: 1px solid;
+  background: transparent;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
 .expense-textarea {
-  min-height: 120px;
   resize: vertical;
   font-family: inherit;
+}
+
+.expense-error-list {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 13px;
 }
 
 .quick-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 5px;
 }
 
 .quick-pill {
   border: 1px solid var(--line);
   border-radius: 999px;
-  padding: 8px 12px;
+  padding: 5px 10px;
   background: #fff3ea;
   color: #7a3e27;
   font-size: 13px;
@@ -522,6 +566,11 @@ select {
 @media (min-width: 768px) {
   .full-mobile {
     width: auto;
+  }
+
+  .expense-form-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
   }
 
   .expense-toolbar {
@@ -542,7 +591,8 @@ select {
 
   .expense-item-top,
   .expense-meta,
-  .expense-category-item {
+  .expense-category-item,
+  .expense-entry-header {
     align-items: flex-start;
     flex-direction: column;
   }
