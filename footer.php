@@ -3,7 +3,7 @@
     $isSalesPage = in_array($currentPage, ['index.php', 'cart.php'], true);
     $isHistoryPage = $currentPage === 'history.php';
     $isSummaryPage = $currentPage === 'summary.php';
-    $isSettingsPage = in_array($currentPage, ['products.php', 'product_form.php'], true);
+    $isSettingsPage = in_array($currentPage, ['expense.php', 'expense_form.php'], true);
 ?>
     </div>
 
@@ -19,8 +19,8 @@
         <a class="nav <?= $isSummaryPage ? 'active' : '' ?>" href="summary.php">
             <span>📊</span>Thống kê
         </a>
-        <a class="nav <?= $isSettingsPage ? 'active' : '' ?>" href="products.php">
-            <span>⚙️</span>Cài đặt
+        <a class="nav <?= $isSettingsPage ? 'active' : '' ?>" href="expense.php">
+            <span>💸</span>Chi phí
         </a>
         <?php endif; ?>
     </div>
