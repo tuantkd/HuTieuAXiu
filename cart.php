@@ -91,46 +91,57 @@ include_once 'header.php'; ?>
         <a class="btn btn-red" href="index.php">+ Chọn món</a>
     </div>
 <?php else: ?>
-
     <div id="cart-shell">
-        <div id="cart-list"><?php foreach ($_SESSION['cart'] as $it): ?>
-                <div class="cart-item"><img src="<?= h($it['image_url']) ?>" alt="<?= h($it['name']) ?>" class="cart-image">
-                    <div><b><?= h($it['name']) ?></b>
-                        <div class="price"><?= moneyVND($it['price']) ?></div><a class="small danger"
-                            href="?remove=<?= $it['id'] ?>">Xóa</a>
+        <div id="cart-list">
+            <?php foreach ($_SESSION['cart'] as $it): ?>
+                <div class="cart-item">
+                    <img src="<?= h($it['image_url']) ?>" alt="<?= h($it['name']) ?>" class="cart-image">
+                    <div>
+                        <b><?= h($it['name']) ?></b>
+                        <div class="price"><?= moneyVND($it['price']) ?></div>
+                        <a class="small danger" href="?remove=<?= $it['id'] ?>">Xóa</a>
                     </div>
                     <div class="cart-qty-box" data-id="<?= $it['id'] ?>" data-price="<?= $it['price'] ?>">
                         <div class="cart-qty-control">
-                            <button class="cart-qty-btn" type="button" data-action="decrease"
-                                aria-label="Giảm số lượng">-</button>
-                            <input class="cart-qty-input" type="number" min="0" name="qty[<?= $it['id'] ?>]"
-                                value="<?= $it['quantity'] ?>" inputmode="numeric">
-                            <button class="cart-qty-btn" type="button" data-action="increase"
-                                aria-label="Tăng số lượng">+</button>
+                            <button class="cart-qty-btn" type="button" data-action="decrease" aria-label="Giảm số lượng">
+                                <i class="fa fa-minus"></i>
+                            </button>
+                            <label for="qty_id" class="sr-only">Số lượng:</label>
+                            <input class="cart-qty-input" id="qty_id" type="number" min="0" name="qty[<?= $it['id'] ?>]" value="<?= $it['quantity'] ?>" inputmode="numeric">
+                            <button class="cart-qty-btn" type="button" data-action="increase" aria-label="Tăng số lượng">
+                                <i class="fa fa-plus"></i>
+                            </button>
                         </div>
                         <div class="right small cart-line-total">
                             <?= moneyVND($it['price'] * $it['quantity']) ?>
                         </div>
                     </div>
-                </div><?php endforeach; ?>
+                </div>
+            <?php endforeach; ?>
         </div>
+
         <form method="post" class="card" id="checkout-form">
             <div class="section-title">Hình thức</div>
             <div class="choice">
                 <label class="btn btn-red">
                     <input type="radio" name="order_type" value="cash" checked>
-                    <?= h(order_type_icon('cash')) ?>     <?= h(order_type_label('cash')) ?>
+                    <?= h(order_type_icon('cash')) ?> <?= h(order_type_label('cash')) ?>
                 </label>
                 <label class="btn btn-red">
                     <input type="radio" name="order_type" value="bank_transfer">
-                    <?= h(order_type_icon('bank_transfer')) ?>     <?= h(order_type_label('bank_transfer')) ?>
+                    <?= h(order_type_icon('bank_transfer')) ?> <?= h(order_type_label('bank_transfer')) ?>
                 </label>
             </div>
-            <input class="input" name="note" placeholder="Ghi chú nếu có"><br><br>
-            <div class="between"><b>Tổng tiền</b>
+
+            <label for="note" class="sr-only">Ghi chú</label>
+            <input class="input" name="note" id="note" placeholder="Ghi chú nếu có"><br><br>
+
+            <div class="between">
+                <b>Tổng tiền</b>
                 <div class="big-total js-cart-total"><?= moneyVND(cart_total()) ?></div>
-            </div>
-            <br><button class="btn btn-red full" name="save_order" value="1">Xác nhận & Lưu đơn</button>
+            </div><br>
+            
+            <button class="btn btn-red full" name="save_order" value="1">Xác nhận & Lưu đơn</button>
         </form>
     </div>
 <?php endif; ?>
@@ -267,4 +278,6 @@ include_once 'header.php'; ?>
         });
     });
 </script>
+
 <?php include_once 'footer.php'; ?>
+

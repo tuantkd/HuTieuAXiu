@@ -51,7 +51,9 @@ include_once 'header.php'; ?>
 <div class="date">📅 Hôm nay: <?= todayVi() ?></div>
 <div class="section-title">Chọn loại sản phẩm</div>
 <div class="tabs">
-    <a class="tab <?= $filter === 'all' ? 'active' : '' ?>" href="index.php">Tất cả</a>
+    <a class="tab <?= $filter === 'all' ? 'active' : '' ?>" href="index.php">
+        Tất cả
+    </a>
     <?php foreach ($categoryTabs as $slug => $name): ?>
         <a aria-label="Xem chi tiết" class="tab <?= $filter === $slug ? 'active' : '' ?>" href="?cat=<?= h($slug) ?>">
             <?= h($name) ?>

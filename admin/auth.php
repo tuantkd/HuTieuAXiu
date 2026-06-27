@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/config.php';
 
-function check_admin_login()
+function checkAdminLogin()
 {
     if (!isLoggedIn()) {
         return;
@@ -16,7 +16,7 @@ function check_admin_login()
     exit;
 }
 
-function login_admin($username, $password)
+function loginAdmin($username, $password)
 {
     $stmt = adminPrepare('SELECT id, username, password_hash, full_name, role FROM users WHERE username = ? LIMIT 1');
     $stmt->bind_param('s', $username);
@@ -40,11 +40,11 @@ function login_admin($username, $password)
     return true;
 }
 
-function logout_admin()
+function logoutAdmin()
 {
     adminClearAuthSession();
     session_unset();
     session_destroy();
-    header('Location: login.php');
+    header('Location: ../login.php');
     exit;
 }

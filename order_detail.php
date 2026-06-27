@@ -13,17 +13,20 @@ include_once 'header.php'; ?>
 <?php if (!$o): ?>
     <div class="card">Không tìm thấy đơn.</div>
 <?php else: ?>
-    <div class="card"><b>#<?= h($o['order_code']) ?></b>
-        <div class="small"><?= date('H:i d/m/Y', strtotime($o['created_at'])) ?> · <?= order_type_text($o['order_type']) ?>
+    <div class="card">
+        <b>#<?= h($o['order_code']) ?></b>
+        <div class="small">
+            <?= date('H:i d/m/Y', strtotime($o['created_at'])) ?> · <?= order_type_text($o['order_type']) ?>
         </div><br>
         <?php while ($i = $items->fetch_assoc()): ?>
             <div class="between">
-                <span><?= h($i['product_name']) ?> x<?= $i['quantity'] ?></span>
+                <span><?= h($i['product_name']) ?> x <?= $i['quantity'] ?></span>
                 <b><?= moneyVND($i['subtotal']) ?></b>
             </div><br>
         <?php endwhile; ?>
         <hr style="border:0;border-top:1px solid #f2dfd2">
-        <div class="between"><b>Tổng tiền</b>
+        <div class="between">
+            <b>Tổng tiền</b>
             <div class="big-total"><?= moneyVND($o['total_amount']) ?></div>
         </div>
     </div>
