@@ -113,7 +113,9 @@ include_once 'header.php';
         <div class="section-title" style="margin:0 0 6px;">Theo dõi chi phí</div>
         <div class="small">Chọn ngày để nhập nhanh, xem tổng chi và sửa lại phiếu chi ngay trên điện thoại.</div>
     </div>
-    <a class="btn btn-red full-mobile" href="expense_form.php?date=<?= h($selectedDate) ?>">+ Nhập chi phí</a>
+    <div>
+        <a class="btn btn-red full-mobile" href="expense_form.php?date=<?= h($selectedDate) ?>">+ Nhập chi phí</a>
+    </div>
 </div>
 
 <form method="get" class="card expense-filter">
@@ -164,7 +166,7 @@ include_once 'header.php';
 <div class="card">
     <div class="between">
         <div class="section-title" style="margin:0;">Phiếu chi trong ngày</div>
-        <a class="small danger" href="expense_form.php?date=<?= h($selectedDate) ?>">+ Thêm mới</a>
+        <div><a class="small danger" href="expense_form.php?date=<?= h($selectedDate) ?>">+ Thêm mới</a></div>
     </div>
 
     <?php if (empty($expenses)): ?>

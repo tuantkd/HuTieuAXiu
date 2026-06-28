@@ -17,9 +17,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($username === '' || $password === '') {
         $error = 'Vui lòng nhập tên đăng nhập và mật khẩu.';
     } elseif (login($username, $password)) {
-        if (currentRole() === 'admin') {
-            redirect('admin/dashboard.php');
-        }
         redirect('index.php');
     } else {
         $error = 'Tên đăng nhập hoặc mật khẩu không chính xác.';
@@ -83,11 +80,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <button type="submit" class="btn btn-red full login-submit">Đăng nhập</button>
             </form>
-
-            <div class="login-note">
-                <strong>Tài khoản mặc định</strong>
-                <span>admin / 123456 hoặc nhanvien / 123456</span>
-            </div>
         </div>
     </div>
 </body>

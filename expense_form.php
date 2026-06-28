@@ -1,9 +1,11 @@
 <?php
 require_once 'config/db.php';
 require_once 'config/helpers.php';
+
 if (!defined('EXPENSE_DATE_URL')) {
     define('EXPENSE_DATE_URL', 'expense.php?date=');
 }
+
 requireLogin();
 require_non_staff();
 
@@ -35,6 +37,21 @@ function expenseFormFetchOne($conn, $sql, $types, array $params)
     return $row ?: null;
 }
 
+function expenseFormNormalizeAmount($value)
+{
+    return preg_replace('/\D+/', '', trim((string) $value));
+}
+
+function expenseFormFormatAmount($value)
+{
+    $normalized = expenseFormNormalizeAmount($value);
+    if ($normalized === '') {
+        return '';
+    }
+
+    return number_format((int) $normalized, 0, '.', ',');
+}
+
 $expenseId = (int) ($_GET['id'] ?? 0);
 $requestedDate = $_GET['date'] ?? today();
 $defaultDate = expenseFormIsValidDate($requestedDate) ? $requestedDate : today();
@@ -53,7 +70,7 @@ $expenseRows = [
         'amount' => '',
         'note' => '',
         'transaction_date' => $defaultDate,
-    ]
+    ],
 ];
 
 if ($isEditing) {
@@ -77,12 +94,13 @@ if ($isEditing) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($isEditing) {
         $category = trim((string) ($_POST['category'] ?? ''));
-        $amount = (int) ($_POST['amount'] ?? 0);
+        $amountRaw = expenseFormNormalizeAmount($_POST['amount'] ?? '');
+        $amount = (int) $amountRaw;
         $transactionDate = $_POST['transaction_date'] ?? today();
         $note = trim((string) ($_POST['note'] ?? ''));
 
         $expense['category'] = $category;
-        $expense['amount'] = $amount > 0 ? $amount : ($_POST['amount'] ?? '');
+        $expense['amount'] = $amountRaw === '' ? '' : expenseFormFormatAmount($amountRaw);
         $expense['transaction_date'] = expenseFormIsValidDate($transactionDate) ? $transactionDate : today();
         $expense['note'] = $note;
 
@@ -118,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         for ($index = 0; $index < $rowCount; $index++) {
             $category = trim((string) ($categories[$index] ?? ''));
-            $amountRaw = trim((string) ($amounts[$index] ?? ''));
+            $amountRaw = expenseFormNormalizeAmount($amounts[$index] ?? '');
             $amount = (int) $amountRaw;
             $note = trim((string) ($notes[$index] ?? ''));
             $transactionDateRaw = trim((string) ($transactionDates[$index] ?? $defaultDate));
@@ -126,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $row = [
                 'category' => $category,
-                'amount' => $amountRaw,
+                'amount' => $amountRaw === '' ? '' : expenseFormFormatAmount($amountRaw),
                 'note' => $note,
                 'transaction_date' => $transactionDate,
             ];
@@ -166,7 +184,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 foreach ($expenseRows as $row) {
                     $category = $row['category'];
-                    $amount = (int) $row['amount'];
+                    $amount = (int) expenseFormNormalizeAmount($row['amount']);
                     $note = $row['note'];
                     $transactionDate = $row['transaction_date'];
                     $savedDate = $transactionDate;
@@ -254,8 +272,9 @@ include_once 'header.php';
         <div class="field-row">
             <div class="field-block">
                 <label class="form-label" for="amount">Số tiền</label>
-                <input class="input" id="amount" type="number" name="amount" min="1000" step="1000" inputmode="numeric"
-                    placeholder="Ví dụ: 150000" value="<?= h((string) $expense['amount']) ?>" required>
+                <input class="input" id="amount" type="text" name="amount" inputmode="numeric" autocomplete="off"
+                    data-money-input placeholder="Ví dụ: 150000"
+                    value="<?= h(expenseFormFormatAmount($expense['amount'])) ?>" required>
             </div>
 
             <div class="field-block">
@@ -324,8 +343,9 @@ include_once 'header.php';
                     <div class="field-row">
                         <div class="field-block">
                             <label class="form-label" for="amount-<?= $index ?>">Số tiền</label>
-                            <input class="input" type="number" id="amount-<?= $index ?>" name="amount[]" min="1000" step="1000"
-                                inputmode="numeric" placeholder="Ví dụ: 150000" value="<?= h((string) $row['amount']) ?>">
+                            <input class="input" type="text" id="amount-<?= $index ?>" name="amount[]" inputmode="numeric"
+                                autocomplete="off" data-money-input placeholder="Ví dụ: 150000"
+                                value="<?= h(expenseFormFormatAmount($row['amount'])) ?>">
                         </div>
 
                         <div class="field-block">
@@ -356,6 +376,80 @@ include_once 'header.php';
 
 <script>
     (function () {
+        function formatMoneyValue(value) {
+            var digits = String(value || '').replace(/\D/g, '');
+            if (!digits) {
+                return '';
+            }
+
+            return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        function countDigits(value) {
+            var match = String(value || '').match(/\d/g);
+            return match ? match.length : 0;
+        }
+
+        function setCaretFromDigitIndex(input, digitIndex) {
+            if (typeof input.setSelectionRange !== 'function') {
+                return;
+            }
+
+            if (digitIndex <= 0) {
+                input.setSelectionRange(0, 0);
+                return;
+            }
+
+            var seenDigits = 0;
+            for (var index = 0; index < input.value.length; index++) {
+                if (/\d/.test(input.value.charAt(index))) {
+                    seenDigits += 1;
+                    if (seenDigits >= digitIndex) {
+                        var caret = index + 1;
+                        input.setSelectionRange(caret, caret);
+                        return;
+                    }
+                }
+            }
+
+            var end = input.value.length;
+            input.setSelectionRange(end, end);
+        }
+
+        function bindMoneyInput(input) {
+            if (!input || input.dataset.moneyBound === '1') {
+                return;
+            }
+
+            input.dataset.moneyBound = '1';
+            input.value = formatMoneyValue(input.value);
+
+            input.addEventListener('input', function () {
+                var start = input.selectionStart || 0;
+                var digitIndex = countDigits(input.value.slice(0, start));
+                input.value = formatMoneyValue(input.value);
+                setCaretFromDigitIndex(input, digitIndex);
+            });
+
+            input.addEventListener('blur', function () {
+                input.value = formatMoneyValue(input.value);
+            });
+        }
+
+        function bindMoneyInputs(scope) {
+            scope.querySelectorAll('[data-money-input]').forEach(bindMoneyInput);
+        }
+
+        bindMoneyInputs(document);
+
+        document.querySelectorAll('form.expense-form').forEach(function (form) {
+            form.addEventListener('submit', function () {
+                form.querySelectorAll('[data-money-input]').forEach(function (input) {
+                    input.value = String(input.value || '').replace(/\D/g, '');
+                });
+            });
+        });
+
         document.querySelectorAll('[data-fill-single-category]').forEach(function (button) {
             button.addEventListener('click', function () {
                 var input = document.getElementById('category');
@@ -426,6 +520,7 @@ include_once 'header.php';
 
             rowsContainer.appendChild(clonedCard);
             bindCategoryPills(clonedCard);
+            bindMoneyInputs(clonedCard);
             refreshRowState();
 
             var categoryInput = clonedCard.querySelector('input[name="category[]"]');

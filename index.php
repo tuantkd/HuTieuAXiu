@@ -36,8 +36,31 @@ if ($filter !== 'all') {
 
 $products = $conn->query("SELECT p.*, c.name category_name, c.slug FROM products p JOIN categories c ON c.id=p.category_id WHERE $where ORDER BY c.sort_order,p.id");
 $today = today();
-$sum = $conn->query("SELECT COALESCE(SUM(total_amount),0) revenue, COUNT(*) orders, SUM(order_type='cash') cash, SUM(order_type='bank_transfer') bank_transfer FROM orders WHERE DATE(created_at)='$today'")->fetch_assoc();
-$categoryStats = $conn->query("SELECT c.slug, c.name, COALESCE(SUM(oi.quantity), 0) qty FROM categories c LEFT JOIN products p ON p.category_id = c.id LEFT JOIN order_items oi ON oi.product_id = p.id LEFT JOIN orders o ON o.id = oi.order_id AND DATE(o.created_at) = '$today' GROUP BY c.slug, c.name ORDER BY c.sort_order, c.id");
+$todayStart = $today . ' 00:00:00';
+$tomorrowStart = date('Y-m-d 00:00:00', strtotime($today . ' +1 day'));
+$sum = $conn->query("
+    SELECT
+        COALESCE(SUM(total_amount), 0) AS revenue,
+        COUNT(*) AS orders,
+        COALESCE(SUM(order_type='cash'), 0) AS cash,
+        COALESCE(SUM(order_type='bank_transfer'), 0) AS bank_transfer
+    FROM orders
+    WHERE created_at >= '$todayStart' AND created_at < '$tomorrowStart'
+")->fetch_assoc();
+$categoryStats = $conn->query("
+    SELECT
+        c.slug,
+        c.name,
+        COALESCE(SUM(CASE WHEN o.id IS NOT NULL THEN oi.quantity ELSE 0 END), 0) AS qty
+    FROM categories c
+    LEFT JOIN products p ON p.category_id = c.id
+    LEFT JOIN order_items oi ON oi.product_id = p.id
+    LEFT JOIN orders o ON o.id = oi.order_id
+        AND o.created_at >= '$todayStart'
+        AND o.created_at < '$tomorrowStart'
+    GROUP BY c.slug, c.name
+    ORDER BY c.sort_order, c.id
+");
 $categoryTotals = [];
 while ($r = $categoryStats->fetch_assoc()) {
     $categoryTotals[$r['slug']] = [

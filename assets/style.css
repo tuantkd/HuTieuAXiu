@@ -201,6 +201,8 @@ a {
 }
 .full-mobile {
   width: 100%;
+  display: block;
+  text-align: center;
 }
 .mini {
   display: flex;
@@ -387,12 +389,10 @@ select {
 }
 
 .expense-toolbar {
-  display: grid;
   gap: 12px;
 }
 
 .expense-filter {
-  display: grid;
   gap: 12px;
 }
 
@@ -402,10 +402,10 @@ select {
 }
 
 .expense-stat-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
   gap: 12px;
   margin-bottom: 20px;
+  width: 100%;
 }
 
 .expense-stat-card {
@@ -414,6 +414,7 @@ select {
   border-radius: 18px;
   padding: 14px;
   box-shadow: var(--shadow);
+  width: 100%;
 }
 
 .expense-stat-value {
@@ -565,7 +566,9 @@ select {
 
 @media (min-width: 768px) {
   .full-mobile {
-    width: auto;
+    width: 100%;
+    display: block;
+    text-align: center;
   }
 
   .expense-form-header {
