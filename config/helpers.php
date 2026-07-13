@@ -22,6 +22,56 @@ function redirect($url)
     header('Location: ' . $url);
     exit;
 }
+
+function toast($type, $message, $flash = false)
+{
+    $allowedTypes = ['success', 'warning', 'error'];
+    $normalizedType = in_array($type, $allowedTypes, true) ? $type : 'success';
+    $normalizedMessage = trim((string) $message);
+
+    if ($normalizedMessage === '') {
+        return;
+    }
+
+    $payload = [
+        'type' => $normalizedType,
+        'message' => $normalizedMessage,
+    ];
+
+    if ($flash) {
+        if (!isset($_SESSION['_app_toasts']) || !is_array($_SESSION['_app_toasts'])) {
+            $_SESSION['_app_toasts'] = [];
+        }
+        $_SESSION['_app_toasts'][] = $payload;
+        return;
+    }
+
+    if (!isset($GLOBALS['_app_toasts']) || !is_array($GLOBALS['_app_toasts'])) {
+        $GLOBALS['_app_toasts'] = [];
+    }
+    $GLOBALS['_app_toasts'][] = $payload;
+}
+
+function app_toasts()
+{
+    static $resolved = null;
+
+    if ($resolved !== null) {
+        return $resolved;
+    }
+
+    $sessionToasts = $_SESSION['_app_toasts'] ?? [];
+    unset($_SESSION['_app_toasts']);
+
+    $inlineToasts = $GLOBALS['_app_toasts'] ?? [];
+    $resolved = array_values(array_filter(array_merge($sessionToasts, $inlineToasts), static function ($toast) {
+        return is_array($toast)
+            && !empty($toast['message'])
+            && in_array(($toast['type'] ?? ''), ['success', 'warning', 'error'], true);
+    }));
+
+    return $resolved;
+}
 function isLoggedIn()
 {
     return (int) ($_SESSION['user_id'] ?? 0) > 0;
@@ -121,6 +171,36 @@ function cart_total()
 function h($s)
 {
     return htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');
+}
+
+function render_toasts()
+{
+    $toasts = app_toasts();
+    if (empty($toasts)) {
+        return;
+    }
+
+    echo '<div class="toast-stack" aria-live="polite" aria-atomic="true">';
+    foreach ($toasts as $toast) {
+        $type = h($toast['type']);
+        $message = h($toast['message']);
+        echo '<div class="toast toast--' . $type . '" data-toast>';
+        echo '<div class="toast__icon" aria-hidden="true">';
+        if ($type === 'success') {
+            echo '<i class="fa fa-check-circle"></i>';
+        } elseif ($type === 'warning') {
+            echo '<i class="fa fa-exclamation-triangle"></i>';
+        } else {
+            echo '<i class="fa fa-times-circle"></i>';
+        }
+        echo '</div>';
+        echo '<div class="toast__body">' . $message . '</div>';
+        echo '<button class="toast__close" type="button" data-toast-close aria-label="Đóng thông báo">';
+        echo '<i class="fa fa-times"></i>';
+        echo '</button>';
+        echo '</div>';
+    }
+    echo '</div>';
 }
 
 function category_icon($slug)

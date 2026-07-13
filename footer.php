@@ -26,5 +26,37 @@
     </div>
 </div>
 
+<script>
+    (function () {
+        function closeToast(toast) {
+            if (!toast || toast.classList.contains('is-leaving')) {
+                return;
+            }
+
+            toast.classList.add('is-leaving');
+            window.setTimeout(function () {
+                if (toast && toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 220);
+        }
+
+        document.querySelectorAll('[data-toast]').forEach(function (toast, index) {
+            var closeButton = toast.querySelector('[data-toast-close]');
+            var delay = 2600 + (index * 180);
+
+            if (closeButton) {
+                closeButton.addEventListener('click', function () {
+                    closeToast(toast);
+                });
+            }
+
+            window.setTimeout(function () {
+                closeToast(toast);
+            }, delay);
+        });
+    })();
+</script>
+
 </body>
 </html>

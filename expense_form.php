@@ -473,9 +473,49 @@ include_once 'header.php';
             cards.forEach(function (card, index) {
                 var title = card.querySelector('[data-row-title]');
                 var removeButton = card.querySelector('[data-remove-expense-row]');
+                var categoryInput = card.querySelector('input[name="category[]"]');
+                var amountInput = card.querySelector('input[name="amount[]"]');
+                var dateInput = card.querySelector('input[name="transaction_date[]"]');
+                var noteInput = card.querySelector('textarea[name="note[]"]');
+                var categoryLabel = card.querySelector('label.sr-only, label[for^="category-"]');
+                var amountLabel = card.querySelector('label[for^="amount-"]');
+                var dateLabel = card.querySelector('label[for^="transaction-date-"]');
+                var noteLabel = card.querySelector('label[for^="note-"]');
 
                 if (title) {
                     title.textContent = 'Khoản chi #' + (index + 1);
+                }
+
+                if (categoryInput) {
+                    categoryInput.id = 'category-' + index;
+                }
+
+                if (amountInput) {
+                    amountInput.id = 'amount-' + index;
+                }
+
+                if (dateInput) {
+                    dateInput.id = 'transaction-date-' + index;
+                }
+
+                if (noteInput) {
+                    noteInput.id = 'note-' + index;
+                }
+
+                if (categoryLabel && categoryInput) {
+                    categoryLabel.setAttribute('for', categoryInput.id);
+                }
+
+                if (amountLabel && amountInput) {
+                    amountLabel.setAttribute('for', amountInput.id);
+                }
+
+                if (dateLabel && dateInput) {
+                    dateLabel.setAttribute('for', dateInput.id);
+                }
+
+                if (noteLabel && noteInput) {
+                    noteLabel.setAttribute('for', noteInput.id);
                 }
 
                 if (removeButton) {
@@ -510,6 +550,10 @@ include_once 'header.php';
 
             var clonedCard = sourceCard.cloneNode(true);
             clonedCard.querySelectorAll('input, textarea').forEach(function (field) {
+                if (field.hasAttribute('data-money-input')) {
+                    field.removeAttribute('data-money-bound');
+                }
+
                 if (field.name === 'transaction_date[]') {
                     field.value = sourceCard.querySelector('input[name="transaction_date[]"]').value;
                     return;

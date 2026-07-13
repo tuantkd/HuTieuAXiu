@@ -37,4 +37,5 @@ require_once __DIR__ . '/config/helpers.php'; ?>
                 </a>
             </div>
         </div>
+        <?php render_toasts(); ?>
         <div class="content">

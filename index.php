@@ -15,6 +15,9 @@ if (isset($_POST['add_product_id'])) {
             $_SESSION['cart'][$pid] = ['id' => $pid, 'name' => $p['name'], 'price' => (int) $p['price'], 'unit' => $p['unit'], 'image_url' => $p['image_url'], 'quantity' => 0];
         }
         $_SESSION['cart'][$pid]['quantity'] += $qty;
+        toast('success', 'Đã thêm "' . $p['name'] . '" vào giỏ hàng.', true);
+    } else {
+        toast('warning', 'Sản phẩm không còn khả dụng hoặc đã bị ẩn.', true);
     }
     redirect('index.php');
 }
