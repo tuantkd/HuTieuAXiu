@@ -29,8 +29,9 @@ $sql .= ' GROUP BY o.id, o.order_code, o.order_type, o.total_amount, o.note, o.c
 $orders = admin_fetch_all($sql, $types, $params);
 
 define('ADMIN_APP', true);
-include __DIR__ . '/layout/header.php';
+include_once __DIR__ . '/layout/header.php';
 ?>
+
 <div class="panel">
     <div class="panel-header">
         <div>
@@ -48,8 +49,8 @@ include __DIR__ . '/layout/header.php';
             <label for="order_type">Loại đơn</label>
             <select id="order_type" name="order_type">
                 <option value="">Tất cả</option>
-                <option value="cash" <?= $orderType === 'cash' ? 'selected' : '' ?>>Ăn tại quán</option>
-                <option value="bank_transfer" <?= $orderType === 'bank_transfer' ? 'selected' : '' ?>>Mang đi</option>
+                <option value="cash" <?= $orderType === 'cash' ? 'selected' : '' ?>>Tiền mặt</option>
+                <option value="bank_transfer" <?= $orderType === 'bank_transfer' ? 'selected' : '' ?>>Chuyển khoản</option>
             </select>
         </div>
         <div class="field" style="display:flex;align-items:flex-end;">
@@ -88,7 +89,8 @@ include __DIR__ . '/layout/header.php';
                             <td><?= adminH($order['note'] ?: '-') ?></td>
                             <td><?= adminH(admin_datetime($order['created_at'])) ?></td>
                             <td><?= admin_money($order['total_amount']) ?></td>
-                            <td><a class="button light small" href="order_detail.php?id=<?= (int) $order['id'] ?>">Chi tiết</a></td>
+                            <td><a class="button light small" href="order_detail.php?id=<?= (int) $order['id'] ?>">Chi tiết</a>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -97,4 +99,4 @@ include __DIR__ . '/layout/header.php';
     </div>
 </div>
 
-<?php include __DIR__ . '/layout/footer.php'; ?>
+<?php include_once __DIR__ . '/layout/footer.php'; ?>

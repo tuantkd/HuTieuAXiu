@@ -181,7 +181,7 @@ include_once __DIR__ . '/layout/header.php';
         </div>
         <div class="field">
             <label for="category">Mục thu/chi</label>
-            <input id="category" type="text" name="category" value="Nguyên liệu" required
+            <input id="category" type="text" name="category" value="Bánh tráng" required
                 placeholder="Nguyên liệu, Tiền điện nước, Bán hàng...">
         </div>
         <div class="field">
@@ -190,14 +190,15 @@ include_once __DIR__ . '/layout/header.php';
         </div>
         <div class="field">
             <label for="transaction_date">Ngày giao dịch</label>
-            <input id="transaction_date" type="date" name="transaction_date" value="<?= adminH($selectedDate) ?>" required>
+            <input id="transaction_date" type="date" name="transaction_date" value="<?= adminH($selectedDate) ?>"
+                required>
         </div>
         <div class="field field--full">
             <label for="note">Ghi chú</label>
             <textarea id="note" name="note" placeholder="Nhập ghi chú chi tiết nếu cần..."></textarea>
         </div>
         <div class="field" style="display:flex;align-items:flex-end;">
-            <button type="submit" class="button">Lưu giao dịch</button>
+            <button type="submit" class="button">Lưu</button>
         </div>
     </form>
 </div>
@@ -261,7 +262,8 @@ include_once __DIR__ . '/layout/header.php';
                 <?php if (empty($recentTransactions)): ?>
                     <tr>
                         <td colspan="5">
-                            <div class="empty-state">Chưa có giao dịch thu chi trong khoảng <?= adminH($rangeLabel) ?>.</div>
+                            <div class="empty-state">Chưa có giao dịch thu chi trong khoảng <?= adminH($rangeLabel) ?>.
+                            </div>
                         </td>
                     </tr>
                 <?php else: ?>
@@ -285,4 +287,3 @@ include_once __DIR__ . '/layout/header.php';
 </div>
 
 <?php include_once __DIR__ . '/layout/footer.php'; ?>
-

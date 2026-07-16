@@ -26,6 +26,7 @@ include_once 'header.php'; ?>
             <span class="price"><?= moneyVND($o['total_amount']) ?></span>
         </div>
         <div class="small">
+            <p><?= h($o['note']) ?></p>
             <?= date('H:i d/m/Y', strtotime($o['created_at'])) ?> · <?= order_type_text($o['order_type']) ?>
         </div>
     </a>

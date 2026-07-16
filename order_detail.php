@@ -16,8 +16,9 @@ include_once 'header.php'; ?>
     <div class="card">
         <b>#<?= h($o['order_code']) ?></b>
         <div class="small">
-            <?= date('H:i d/m/Y', strtotime($o['created_at'])) ?> · <?= order_type_text($o['order_type']) ?>
-        </div><br>
+            <p><?= date('H:i d/m/Y', strtotime($o['created_at'])) ?> · <?= order_type_text($o['order_type']) ?></p>
+            <p><?= h($o['note']) ?></p>
+        </div>
         <?php while ($i = $items->fetch_assoc()): ?>
             <div class="between">
                 <span><?= h($i['product_name']) ?> x <?= $i['quantity'] ?></span>

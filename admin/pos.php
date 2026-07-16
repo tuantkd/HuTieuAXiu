@@ -159,20 +159,18 @@ include __DIR__ . '/layout/header.php';
 
             <div class="product-grid" id="productGrid">
                 <?php foreach ($products as $product): ?>
-                    <button
-                        type="button"
-                        class="product-card"
-                        data-product-id="<?= (int) $product['id'] ?>"
+                    <button type="button" class="product-card" data-product-id="<?= (int) $product['id'] ?>"
                         data-product-name="<?= adminH($product['name']) ?>"
                         data-product-price="<?= (int) $product['price'] ?>"
-                        data-search="<?= adminH(function_exists('mb_strtolower') ? mb_strtolower($product['name'] . ' ' . $product['category_name'], 'UTF-8') : strtolower($product['name'] . ' ' . $product['category_name'])) ?>"
-                    >
+                        data-search="<?= adminH(function_exists('mb_strtolower') ? mb_strtolower($product['name'] . ' ' . $product['category_name'], 'UTF-8') : strtolower($product['name'] . ' ' . $product['category_name'])) ?>">
                         <div class="product-thumb">
-                            <img src="<?= adminH(admin_media_url($product['image_url'])) ?>" alt="<?= adminH($product['name']) ?>">
+                            <img src="<?= adminH(admin_media_url($product['image_url'])) ?>"
+                                alt="<?= adminH($product['name']) ?>">
                         </div>
                         <div class="product-info">
                             <div class="product-name"><?= adminH($product['name']) ?></div>
-                            <div class="product-unit"><?= adminH($product['category_name']) ?> • <?= adminH($product['unit'] ?: 'phần') ?></div>
+                            <div class="product-unit"><?= adminH($product['category_name']) ?> •
+                                <?= adminH($product['unit'] ?: 'phần') ?></div>
                             <div class="product-price"><?= admin_money($product['price']) ?></div>
                         </div>
                     </button>
@@ -192,22 +190,22 @@ include __DIR__ . '/layout/header.php';
                 </div>
 
                 <div class="field" style="margin-top:18px;">
-                    <label>Loại đơn</label>
+                    <label for="order_type">Loại đơn</label>
                     <div class="order-type-grid">
                         <label class="order-type-option">
                             <input type="radio" name="order_type" value="cash" checked>
-                            <span>Ăn tại quán</span>
+                            <span>Tiền mặt</span>
                         </label>
                         <label class="order-type-option">
                             <input type="radio" name="order_type" value="bank_transfer">
-                            <span>Mang đi</span>
+                            <span>Chuyển khoản</span>
                         </label>
                     </div>
                 </div>
 
                 <div class="field" style="margin-top:18px;">
                     <label for="note">Ghi chú đơn hàng</label>
-                    <textarea id="note" name="note" placeholder="Ví dụ: ít đá, bàn số 5, khách mang đi..."></textarea>
+                    <textarea id="note" name="note" placeholder="Ví dụ: Khách tự đến nhận hàng ..."></textarea>
                 </div>
 
                 <div class="total-box" style="margin-top:18px;">
@@ -239,7 +237,8 @@ include __DIR__ . '/layout/header.php';
                                 <div>
                                     <strong><?= adminH($order['order_code'] ?: ('#' . $order['id'])) ?></strong>
                                     <div class="product-meta">
-                                        <?= adminH(admin_order_type_label($order['order_type'])) ?> • <?= adminH(date('H:i', strtotime($order['created_at']))) ?>
+                                        <?= adminH(admin_order_type_label($order['order_type'])) ?> •
+                                        <?= adminH(date('H:i', strtotime($order['created_at']))) ?>
                                         <?php if (!isStaff()): ?>
                                             • <?= adminH(admin_order_seller_label($order)) ?>
                                         <?php endif; ?>
@@ -259,67 +258,67 @@ include __DIR__ . '/layout/header.php';
 </div>
 
 <script>
-const cart = [];
-const productCards = document.querySelectorAll('.product-card');
-const productSearch = document.getElementById('productSearch');
-const cartList = document.getElementById('cartList');
-const cartTotal = document.getElementById('cartTotal');
-const itemsJson = document.getElementById('itemsJson');
-const posForm = document.getElementById('posForm');
+    const cart = [];
+    const productCards = document.querySelectorAll('.product-card');
+    const productSearch = document.getElementById('productSearch');
+    const cartList = document.getElementById('cartList');
+    const cartTotal = document.getElementById('cartTotal');
+    const itemsJson = document.getElementById('itemsJson');
+    const posForm = document.getElementById('posForm');
 
-function formatMoney(value) {
-    return new Intl.NumberFormat('vi-VN').format(value) + 'đ';
-}
-
-function addToCart(productId, productName, productPrice) {
-    const existing = cart.find(item => item.product_id === productId);
-    if (existing) {
-        existing.quantity += 1;
-    } else {
-        cart.push({
-            product_id: productId,
-            name: productName,
-            price: Number(productPrice),
-            quantity: 1
-        });
-    }
-    renderCart();
-}
-
-function changeQuantity(index, delta) {
-    if (!cart[index]) {
-        return;
-    }
-    cart[index].quantity = Math.max(1, cart[index].quantity + delta);
-    renderCart();
-}
-
-function removeItem(index) {
-    cart.splice(index, 1);
-    renderCart();
-}
-
-function clearCart() {
-    cart.length = 0;
-    renderCart();
-}
-
-function renderCart() {
-    if (cart.length === 0) {
-        cartList.innerHTML = '<div class="empty-state">Chưa có món nào trong giỏ.</div>';
-        cartTotal.textContent = '0đ';
-        itemsJson.value = '[]';
-        return;
+    function formatMoney(value) {
+        return new Intl.NumberFormat('vi-VN').format(value) + 'đ';
     }
 
-    let total = 0;
-    cartList.innerHTML = '';
+    function addToCart(productId, productName, productPrice) {
+        const existing = cart.find(item => item.product_id === productId);
+        if (existing) {
+            existing.quantity += 1;
+        } else {
+            cart.push({
+                product_id: productId,
+                name: productName,
+                price: Number(productPrice),
+                quantity: 1
+            });
+        }
+        renderCart();
+    }
 
-    cart.forEach((item, index) => {
-        total += item.price * item.quantity;
-        const wrapper = document.createElement('div');
-        wrapper.className = 'cart-item';
-        wrapper.innerHTML = `
+    function changeQuantity(index, delta) {
+        if (!cart[index]) {
+            return;
+        }
+        cart[index].quantity = Math.max(1, cart[index].quantity + delta);
+        renderCart();
+    }
+
+    function removeItem(index) {
+        cart.splice(index, 1);
+        renderCart();
+    }
+
+    function clearCart() {
+        cart.length = 0;
+        renderCart();
+    }
+
+    function renderCart() {
+        if (cart.length === 0) {
+            cartList.innerHTML = '<div class="empty-state">Chưa có món nào trong giỏ.</div>';
+            cartTotal.textContent = '0đ';
+            itemsJson.value = '[]';
+            return;
+        }
+
+        let total = 0;
+        cartList.innerHTML = '';
+
+        cart.forEach((item, index) => {
+            total += item.price * item.quantity;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'cart-item';
+            wrapper.innerHTML = `
             <div>
                 <h4>${item.name}</h4>
                 <div class="product-meta">${formatMoney(item.price)} x ${item.quantity}</div>
@@ -332,62 +331,62 @@ function renderCart() {
                 <button type="button" class="button danger small" data-action="remove" data-index="${index}">X</button>
             </div>
         `;
-        cartList.appendChild(wrapper);
-    });
+            cartList.appendChild(wrapper);
+        });
 
-    cartTotal.textContent = formatMoney(total);
-    itemsJson.value = JSON.stringify(cart.map(item => ({
-        product_id: item.product_id,
-        quantity: item.quantity
-    })));
-}
+        cartTotal.textContent = formatMoney(total);
+        itemsJson.value = JSON.stringify(cart.map(item => ({
+            product_id: item.product_id,
+            quantity: item.quantity
+        })));
+    }
 
-productCards.forEach(card => {
-    card.addEventListener('click', () => {
-        addToCart(
-            Number(card.dataset.productId),
-            card.dataset.productName,
-            Number(card.dataset.productPrice)
-        );
-    });
-});
-
-productSearch.addEventListener('input', () => {
-    const keyword = productSearch.value.trim().toLowerCase();
     productCards.forEach(card => {
-        const visible = card.dataset.search.includes(keyword);
-        card.style.display = visible ? 'flex' : 'none';
+        card.addEventListener('click', () => {
+            addToCart(
+                Number(card.dataset.productId),
+                card.dataset.productName,
+                Number(card.dataset.productPrice)
+            );
+        });
     });
-});
 
-cartList.addEventListener('click', event => {
-    const button = event.target.closest('button[data-action]');
-    if (!button) {
-        return;
-    }
+    productSearch.addEventListener('input', () => {
+        const keyword = productSearch.value.trim().toLowerCase();
+        productCards.forEach(card => {
+            const visible = card.dataset.search.includes(keyword);
+            card.style.display = visible ? 'flex' : 'none';
+        });
+    });
 
-    const index = Number(button.dataset.index);
-    const action = button.dataset.action;
+    cartList.addEventListener('click', event => {
+        const button = event.target.closest('button[data-action]');
+        if (!button) {
+            return;
+        }
 
-    if (action === 'minus') {
-        changeQuantity(index, -1);
-    } else if (action === 'plus') {
-        changeQuantity(index, 1);
-    } else if (action === 'remove') {
-        removeItem(index);
-    }
-});
+        const index = Number(button.dataset.index);
+        const action = button.dataset.action;
 
-document.getElementById('clearCartButton').addEventListener('click', clearCart);
-document.getElementById('saveOrderButton').addEventListener('click', () => {
-    if (cart.length === 0) {
-        alert('Giỏ hàng đang trống.');
-        return;
-    }
-    posForm.submit();
-});
+        if (action === 'minus') {
+            changeQuantity(index, -1);
+        } else if (action === 'plus') {
+            changeQuantity(index, 1);
+        } else if (action === 'remove') {
+            removeItem(index);
+        }
+    });
 
-renderCart();
+    document.getElementById('clearCartButton').addEventListener('click', clearCart);
+    document.getElementById('saveOrderButton').addEventListener('click', () => {
+        if (cart.length === 0) {
+            alert('Giỏ hàng đang trống.');
+            return;
+        }
+        posForm.submit();
+    });
+
+    renderCart();
 </script>
 
 <?php include __DIR__ . '/layout/footer.php'; ?>

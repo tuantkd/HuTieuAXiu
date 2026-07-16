@@ -105,7 +105,7 @@ function admin_datetime($datetime)
 
 function admin_order_type_label($type)
 {
-    return $type === 'bank_transfer' ? 'Mang đi' : 'Ăn tại quán';
+    return $type === 'bank_transfer' ? 'Chuyển khoản' : 'Tiền mặt';
 }
 
 function admin_role_label($role)

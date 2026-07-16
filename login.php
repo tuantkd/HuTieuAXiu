@@ -147,15 +147,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                         </div>
 
-                        <div class="login-form__meta">
-                            <label class="login-check">
-                                <input type="checkbox" name="remember_me" value="1" <?= !empty($_POST['remember_me']) ? 'checked' : '' ?>>
-                                <span class="login-check__box" aria-hidden="true"></span>
-                                <span>Ghi nhớ đăng nhập</span>
-                            </label>
-                            <span class="login-help">Quên mật khẩu?</span>
-                        </div>
-
                         <button type="submit" class="btn btn-red full login-submit">
                             <span>Đăng nhập</span>
                             <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
@@ -182,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </main>
 
-    <p class="login-footer">© 2024 Sổ Tay A Xíu. All rights reserved.</p>
+    <p class="login-footer">© <?php echo date('Y'); ?> Sổ Tay A Xíu. All rights reserved.</p>
 
     <script>
         (function () {

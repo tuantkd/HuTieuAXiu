@@ -352,7 +352,11 @@ img {
 .form-card.form-card--single {
     grid-template-columns: 1fr;
 }
-
+.field {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
 .form-card label,
 .field label {
     display: block;
