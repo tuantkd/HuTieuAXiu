@@ -19,7 +19,7 @@ if (isset($_POST['add_product_id'])) {
     } else {
         toast('warning', 'Sản phẩm không còn khả dụng hoặc đã bị ẩn.', true);
     }
-    redirect('index.php');
+    redirect('cart.php');
 }
 
 $filter = $_GET['cat'] ?? 'all';
