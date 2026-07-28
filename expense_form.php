@@ -1,13 +1,11 @@
 <?php
 require_once 'config/db.php';
 require_once 'config/helpers.php';
-
+requireLogin();
+require_non_staff();
 if (!defined('EXPENSE_DATE_URL')) {
     define('EXPENSE_DATE_URL', 'expense.php?date=');
 }
-
-requireLogin();
-require_non_staff();
 
 function expenseFormIsValidDate($value)
 {

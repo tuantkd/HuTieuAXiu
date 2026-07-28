@@ -1,6 +1,7 @@
 <?php
 require_once 'config/db.php';
 require_once 'config/helpers.php';
+requireLogin();
 if (!defined('DATE_EXPENSE')) {
     define('DATE_EXPENSE', 'd/m/Y');
 }
