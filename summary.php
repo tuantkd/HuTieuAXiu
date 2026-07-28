@@ -1,6 +1,9 @@
 <?php
 require_once 'config/db.php';
 require_once 'config/helpers.php';
+if (!defined('DATE_EXPENSE')) {
+    define('DATE_EXPENSE', 'd/m/Y');
+}
 require_non_staff();
 
 function summaryIsValidDate($value)
@@ -94,6 +97,15 @@ function summaryNormalizeRange($fallbackDate, $startDate, $endDate)
     return [$startDate, $endDate, $startDate > $endDate];
 }
 
+function summaryFormatDisplayDate($value)
+{
+    if (!summaryIsValidDate($value)) {
+        return '--/--/----';
+    }
+
+    return date(DATE_EXPENSE, strtotime($value));
+}
+
 $mode = $_GET['mode'] ?? 'day';
 if (!in_array($mode, ['day', 'week', 'month', 'range'], true)) {
     $mode = 'day';
@@ -147,14 +159,25 @@ $total = summaryFetchOne(
     ['revenue' => 0, 'orders' => 0, 'cash' => 0, 'bank_transfer' => 0]
 );
 
-$items = summaryFetchAll(
+$revenueEntries = summaryFetchAll(
     $conn,
-    "SELECT oi.product_name, SUM(oi.quantity) AS qty, SUM(oi.subtotal) AS amount
-     FROM order_items oi
-     JOIN orders o ON o.id = oi.order_id
+    "SELECT
+        o.id,
+        o.order_code,
+        o.order_type,
+        o.total_amount,
+        o.note,
+        o.created_at,
+        GROUP_CONCAT(
+            CONCAT(oi.product_name, ' x ', oi.quantity)
+            ORDER BY oi.id ASC
+            SEPARATOR ' • '
+        ) AS item_summary
+     FROM orders o
+     LEFT JOIN order_items oi ON oi.order_id = o.id
      WHERE DATE(o.created_at) BETWEEN ? AND ?
-     GROUP BY oi.product_name
-     ORDER BY amount DESC, oi.product_name ASC",
+     GROUP BY o.id, o.order_code, o.order_type, o.total_amount, o.note, o.created_at
+     ORDER BY o.created_at DESC, o.id DESC",
     'ss',
     [$start, $end]
 );
@@ -171,16 +194,17 @@ $expenseSummary = summaryFetchOne(
     ['expense_total' => 0, 'expense_count' => 0]
 );
 
-$expenseItems = summaryFetchAll(
+$expenseEntries = summaryFetchAll(
     $conn,
     "SELECT
+        id,
         category,
-        COUNT(*) AS entry_count,
-        SUM(amount) AS amount
+        amount,
+        note,
+        transaction_date
      FROM transactions
      WHERE type = 'expense' AND transaction_date BETWEEN ? AND ?
-     GROUP BY category
-     ORDER BY amount DESC, category ASC",
+     ORDER BY transaction_date DESC, id DESC",
     'ss',
     [$start, $end]
 );
@@ -194,8 +218,8 @@ include_once 'header.php';
 
 <div class="date">
     📊 Tổng kết
-    <?= date('d/m/Y', strtotime($start)) ?>
-    <?= $start !== $end ? ' - ' . date('d/m/Y', strtotime($end)) : '' ?>
+    <?= date(DATE_EXPENSE, strtotime($start)) ?>
+    <?= $start !== $end ? ' - ' . date(DATE_EXPENSE, strtotime($end)) : '' ?>
 </div>
 
 <div class="tabs">
@@ -288,50 +312,90 @@ include_once 'header.php';
 
 <div class="card">
     <div class="section-title">Chi tiết doanh thu</div>
-    <table class="table">
-        <tr>
-            <th>Món</th>
-            <th class="right">Số lượng</th>
-            <th class="right">Tiền</th>
-        </tr>
-        <?php if (empty($items)): ?>
-            <tr>
-                <td colspan="3" class="small">Chưa có doanh thu trong khoảng thời gian này.</td>
-            </tr>
+    <div class="summary-sales-panel">
+        <?php if (empty($revenueEntries)): ?>
+            <div class="expense-empty">Chưa có doanh thu trong khoảng thời gian này.</div>
         <?php else: ?>
-            <?php foreach ($items as $item): ?>
-                <tr>
-                    <td><?= h($item['product_name']) ?></td>
-                    <td class="right"><?= (int) ($item['qty'] ?? 0) ?></td>
-                    <td class="right"><?= moneyVND($item['amount'] ?? 0) ?></td>
-                </tr>
-            <?php endforeach; ?>
+            <div class="summary-order-entry-list">
+                <?php foreach ($revenueEntries as $entry): ?>
+                    <?php
+                    $orderNote = trim((string) ($entry['note'] ?? ''));
+                    $itemSummary = trim((string) ($entry['item_summary'] ?? ''));
+                    $createdAt = trim((string) ($entry['created_at'] ?? ''));
+                    $createdLabel = $createdAt !== '' ? date('H:i d/m/Y', strtotime($createdAt)) : '--:-- --/--/----';
+                    $orderLabel = trim((string) ($entry['order_code'] ?? '')) ?: ('Đơn #' . (int) ($entry['id'] ?? 0));
+                    ?>
+                    <div class="summary-order-entry">
+                        <div class="summary-order-entry-top">
+                            <div class="summary-order-entry-head">
+                                <b class="summary-order-entry-code"><?= h($orderLabel) ?></b>
+                                <div class="summary-order-entry-meta">
+                                    <?= h($createdLabel) ?> • <?= h(order_type_text($entry['order_type'] ?? '')) ?>
+                                </div>
+                            </div>
+                            <div class="summary-order-entry-amount">
+                                <?= moneyVND($entry['total_amount'] ?? 0) ?>
+                            </div>
+                        </div>
+
+                        <?php if ($itemSummary !== ''): ?>
+                            <div class="summary-order-entry-items"><?= h($itemSummary) ?></div>
+                        <?php endif; ?>
+
+                        <?php if ($orderNote !== ''): ?>
+                            <div class="summary-order-entry-note">
+                                <span class="summary-order-entry-note-label">Ghi chú:</span>
+                                <?= nl2br(h($orderNote)) ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="summary-order-entry-note summary-order-entry-note-empty">
+                                Chưa có ghi chú.
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+            </div>
         <?php endif; ?>
-    </table>
+    </div>
 </div>
 
 <div class="card">
     <div class="section-title">Chi tiết chi phí</div>
-    <table class="table">
-        <tr>
-            <th>Hạng mục</th>
-            <th class="right">Số phiếu</th>
-            <th class="right">Tiền</th>
-        </tr>
-        <?php if (empty($expenseItems)): ?>
-            <tr>
-                <td colspan="3" class="small">Chưa có chi phí trong khoảng thời gian này.</td>
-            </tr>
-        <?php else: ?>
-            <?php foreach ($expenseItems as $expense): ?>
-                <tr>
-                    <td><?= h(trim((string) ($expense['category'] ?? '')) ?: 'Chi phí khác') ?></td>
-                    <td class="right"><?= (int) ($expense['entry_count'] ?? 0) ?></td>
-                    <td class="right"><?= moneyVND($expense['amount'] ?? 0) ?></td>
-                </tr>
+    <?php if (empty($expenseEntries)): ?>
+        <div class="expense-empty">Chưa có chi phí trong khoảng thời gian này.</div>
+    <?php else: ?>
+        <div class="summary-expense-entry-list">
+            <?php foreach ($expenseEntries as $expense): ?>
+                <?php $note = trim((string) ($expense['note'] ?? '')); ?>
+                <div class="summary-expense-entry">
+                    <div class="summary-expense-entry-top">
+                        <div class="summary-expense-entry-title">
+                            <b class="summary-expense-entry-category">
+                                <?= h(trim((string) ($expense['category'] ?? '')) ?: 'Chi phí khác') ?>
+                            </b>
+                            <div class="summary-expense-entry-date">
+                                Ngày chi: <?= h(summaryFormatDisplayDate($expense['transaction_date'] ?? '')) ?>
+                            </div>
+                        </div>
+                        <div class="summary-expense-entry-amount">
+                            <?= moneyVND($expense['amount'] ?? 0) ?>
+                        </div>
+                    </div>
+
+                    <?php if ($note !== ''): ?>
+                        <div class="summary-expense-entry-note">
+                            <span class="summary-expense-entry-note-label">Ghi chú:</span>
+                            <?= nl2br(h($note)) ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="summary-expense-entry-note summary-expense-entry-note-empty">
+                            Chưa có ghi chú.
+                        </div>
+                    <?php endif; ?>
+                </div>
             <?php endforeach; ?>
-        <?php endif; ?>
-    </table>
+        </div>
+    <?php endif; ?>
 </div>
 
 <?php include_once 'footer.php'; ?>
