@@ -47,7 +47,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="login-card">
             <section class="login-showcase" aria-label="Giới thiệu Sổ Tay A Xíu">
                 <div class="login-showcase__ornament" aria-hidden="true"></div>
-
                 <div class="login-showcase__brand">
                     <img class="login-logo" src="assets/img/logo-axiu.png" alt="Logo A Xíu">
                     <p class="login-kicker">Sổ Tay</p>
@@ -55,47 +54,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <p class="login-showcase__copy">
                         Quản lý đơn hàng - Theo dõi lịch sử - Tạo đơn nhanh chóng
                     </p>
-                </div>
-
-                <div class="login-feature-list" aria-label="Điểm nổi bật">
-                    <article class="login-feature">
-                        <span class="login-feature__icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" focusable="false">
-                                <path
-                                    d="M7 18c-.6 0-1 .4-1 1s.4 1 1 1 1-.4 1-1-.4-1-1-1Zm10 0c-.6 0-1 .4-1 1s.4 1 1 1 1-.4 1-1-.4-1-1-1ZM7.2 14h9.9c.8 0 1.5-.5 1.8-1.2l2-4.7a1 1 0 0 0-.9-1.4H6.2L5.7 4.6A1 1 0 0 0 4.7 4H3a1 1 0 1 0 0 2h1l2.3 9.2A2 2 0 0 0 8.2 17H18a1 1 0 1 0 0-2H8.2Z" />
-                            </svg>
-                        </span>
-                        <div>
-                            <h2>Tạo đơn nhanh</h2>
-                            <p>Tạo đơn hàng chỉ với vài thao tác đơn giản</p>
-                        </div>
-                    </article>
-
-                    <article class="login-feature">
-                        <span class="login-feature__icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" focusable="false">
-                                <path
-                                    d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm1 10.6 3.2 1.9a1 1 0 1 1-1 1.7l-3.7-2.2a1 1 0 0 1-.5-.8V7a1 1 0 1 1 2 0Z" />
-                            </svg>
-                        </span>
-                        <div>
-                            <h2>Theo dõi lịch sử</h2>
-                            <p>Xem lại và quản lý các đơn hàng dễ dàng</p>
-                        </div>
-                    </article>
-
-                    <article class="login-feature">
-                        <span class="login-feature__icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" focusable="false">
-                                <path
-                                    d="M8 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3Zm0 2h8a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm2 12a1 1 0 1 0 0 2h4a1 1 0 1 0 0-2Z" />
-                            </svg>
-                        </span>
-                        <div>
-                            <h2>Dễ thao tác</h2>
-                            <p>Tối ưu giao diện cho điện thoại và máy tính</p>
-                        </div>
-                    </article>
                 </div>
             </section>
 

@@ -152,8 +152,8 @@ body.login-page {
 }
 
 .login-logo {
-  width: 96px;
-  height: 96px;
+  width: 100px;
+  height: 100px;
   object-fit: cover;
   display: block;
   border-radius: 999px;
@@ -653,8 +653,8 @@ body.login-page {
   }
 
   .login-logo {
-    width: 78px;
-    height: 78px;
+    width: 100px;
+    height: 100px;
     margin: 0 auto;
   }
 
@@ -890,8 +890,8 @@ body.login-page {
   }
 
   .login-logo {
-    width: 84px;
-    height: 84px;
+    width: 100px;
+    height: 100px;
   }
 
   .login-kicker {
