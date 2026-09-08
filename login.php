@@ -51,18 +51,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <img class="login-logo" src="assets/img/logo-axiu.png" alt="Logo A Xíu">
                     <p class="login-kicker">Sổ Tay</p>
                     <h1 class="login-display">A Xíu</h1>
-                    <p class="login-showcase__copy">
-                        Quản lý đơn hàng - Theo dõi lịch sử - Tạo đơn nhanh chóng
-                    </p>
                 </div>
             </section>
 
             <section class="login-panel" aria-label="Biểu mẫu đăng nhập">
                 <div class="login-panel__body">
                     <header class="login-panel__intro">
-                        <div class="login-wave" aria-hidden="true">👋</div>
                         <div>
-                            <h2>Chào mừng trở lại!</h2>
                             <p>Đăng nhập để tiếp tục sử dụng Sổ Tay A Xíu</p>
                         </div>
                     </header>
