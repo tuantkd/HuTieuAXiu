@@ -153,8 +153,14 @@ function createMailer(array $config, $recipient, array $report)
 {
     $content = renderRevenueEmail($report, $config['shop_name']);
     $smtp = $config['smtp'];
-    $mail = new PHPMailer(true);
+    $domain = strtolower(substr(strrchr($smtp['from_email'], '@'), 1));
+    require_once __DIR__ . '/NotificationMailer.php';
+    $mail = new NotificationMailer(true);
     $mail->isSMTP();
+    // Use the sending domain for the SMTP greeting instead of a Windows/local
+    // machine name. SPF/DKIM/DMARC are still checked on the delivered message.
+    $mail->Hostname = $domain;
+    $mail->Helo = $domain;
     $mail->Host = $smtp['host'];
     $mail->Port = (int) $smtp['port'];
     $mail->SMTPSecure = $smtp['encryption'];
@@ -173,7 +179,6 @@ function createMailer(array $config, $recipient, array $report)
     $mail->Subject = $content['subject'];
     $mail->Body = $content['html'];
     $mail->AltBody = $content['text'];
-    $domain = substr(strrchr($smtp['from_email'], '@'), 1);
     $mail->MessageID = '<axiu-' . hash('sha256', $report['date'] . '|' . $recipient . '|' . $smtp['from_email']) . '@' . $domain . '>';
     return $mail;
 }

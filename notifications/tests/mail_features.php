@@ -124,12 +124,34 @@ try {
     checkMail(count(fetchNotificationOrders($adapter, $at, $config['new_orders_since'])) === 3, 'Checkout becomes eligible when all item totals match.');
     $mail = createOrderMailer($config, 'first@example.com', $orders[0]);
     checkMail($mail->getToAddresses() === [['first@example.com', '']] && !$mail->getCcAddresses() && !$mail->getBccAddresses(), 'Recipient addresses remain private.');
+    checkMail($mail->Helo === 'example.com' && $mail->Sender === $mail->From, 'Order notifications reuse aligned SMTP identity.');
     checkMail(strpos($mail->Subject, 'AX-TEST-3') !== false && strpos($mail->AltBody, '75.000 đ') !== false, 'Email includes saved order code and total.');
     checkMail(strpos($mail->Body, '<script>') === false && strpos($mail->Body, '&lt;script&gt;') !== false, 'HTML safely escapes order notes.');
     checkMail(strpos($mail->Body, $config['smtp']['password']) === false, 'Email never contains SMTP password.');
     checkMail($mail->MessageID === createOrderMailer($config, 'first@example.com', $orders[0])->MessageID
         && $mail->MessageID !== createOrderMailer($config, 'second@example.com', $orders[0])->MessageID, 'Message identity is stable per order/recipient.');
     checkMail($mail->preSend(), 'PHPMailer generates a valid MIME message without connecting to SMTP.');
+
+    $subjects = [
+        'Sổ Tay A Xíu | Xác nhận hệ thống thông báo [AXIU-20261015-193714-EEC7]',
+        $mail->Subject,
+        str_repeat('Đơn hàng A Xíu 😊 ', 15),
+    ];
+    foreach ($subjects as $subject) {
+        $subject = trim($subject);
+        $mail->Subject = $subject;
+        $mail->FromName = trim(str_repeat('Sổ Tay A Xíu ', 8));
+        checkMail($mail->preSend(), 'Generate MIME with a long Vietnamese header.');
+        $mime = $mail->getSentMIMEMessage();
+        $headers = explode("\r\n\r\n", $mime, 2)[0];
+        preg_match_all('/=\?[^?\s]+\?[BQ]\?[^?\r\n]*\?=/i', $headers, $words);
+        checkMail(count($words[0]) > 1 && max(array_map('strlen', $words[0])) <= 75, 'Every encoded word in the actual MIME headers respects RFC 2047.');
+        preg_match('/^Subject: ([^\r\n]*(?:\r\n[ \t][^\r\n]*)*)/m', $headers, $subjectHeader);
+        checkMail(iconv_mime_decode($subjectHeader[1], ICONV_MIME_DECODE_STRICT, 'UTF-8') === $subject, 'Strict MIME decoding preserves the complete Vietnamese subject.');
+        preg_match('/^From: ([^\r\n]*(?:\r\n[ \t][^\r\n]*)*)/m', $headers, $fromHeader);
+        checkMail(iconv_mime_decode($fromHeader[1], ICONV_MIME_DECODE_STRICT, 'UTF-8') === $mail->FromName . ' <sender@example.com>', 'Strict MIME decoding preserves a long sender display name.');
+    }
+    checkMail($mail->encodeHeader('Order AX-123') === 'Order AX-123', 'Plain ASCII headers keep the standard PHPMailer behavior.');
 
     $fetch = static function () use ($orders) { return $orders; };
     $attempts = [];

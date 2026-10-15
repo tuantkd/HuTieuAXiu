@@ -1,10 +1,19 @@
 {
-  "files.insertFinalNewline": true,
-  "files.trimFinalNewlines": true,
-  "files.eol": "\n",
   "editor.tabSize": 2,
   "editor.insertSpaces": true,
   "editor.detectIndentation": false,
-  "editor.useTabStops": true,
-  "files.trimTrailingWhitespace": true
+
+  "editor.formatOnSave": false,
+  "editor.formatOnPaste": false,
+  "editor.formatOnType": false,
+
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "files.trimTrailingWhitespace": false,
+
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "never",
+    "source.organizeImports": "never"
+  }
 }

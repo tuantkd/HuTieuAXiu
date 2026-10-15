@@ -135,6 +135,8 @@ try {
     check(count($mail->getToAddresses()) === 1 && !$mail->getBccAddresses() && !$mail->getCcAddresses(), 'Each email has only one recipient.');
     check(strpos($mail->getSentMIMEMessage(), 'multipart/alternative') !== false, 'Include HTML and plain text alternatives.');
     check($mail->SMTPSecure === 'ssl' && $mail->SMTPAuth && $mail->Port === 465, 'Use authenticated cPanel SSL SMTP.');
+    check($mail->Helo === 'example.com' && $mail->Hostname === 'example.com', 'Use the sending domain for SMTP identity, independent of local machine names.');
+    check($mail->Sender === $mail->From && $mail->From === $config['smtp']['from_email'], 'Keep envelope sender aligned with the visible From address.');
     check($mail->MessageID === createMailer($config, 'first@example.com', $report)->MessageID, 'Keep a stable Message-ID for retries.');
     check($mail->MessageID !== createMailer($config, 'second@example.com', $report)->MessageID, 'Use separate Message-IDs per recipient.');
 

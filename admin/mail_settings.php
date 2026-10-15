@@ -48,6 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+$senderDomain = filter_var($mailConfig['smtp']['from_email'], FILTER_VALIDATE_EMAIL)
+    ? strtolower(substr(strrchr($mailConfig['smtp']['from_email'], '@'), 1)) : '';
 $deliverySummary = ['sent' => 0, 'failed' => 0, 'pending' => 0, 'uncertain' => 0];
 $lastDeliveryCheck = '';
 $deliveryStateError = '';
@@ -145,6 +147,29 @@ include __DIR__ . '/layout/header.php';
         <div class="field field--full"><button type="submit" class="button">Lưu cấu hình email</button></div>
     </form>
 </div>
+<?php if ($senderDomain): ?>
+<div class="panel">
+    <div class="panel-header"><h3>Xác thực tên miền gửi</h3></div>
+    <p>Email đang dùng tên miền <strong><?= adminH($senderDomain) ?></strong>.
+        Cấu hình SMTP và xác thực tên miền đều cần đúng để Gmail đánh giá người gửi.</p>
+    <p>Kiểm tra SPF và DKIM trong <strong>cPanel → Email Deliverability</strong>.
+        Bản ghi DNS phải được lưu tại nơi quản lý nameserver của tên miền; nếu dùng Namecheap BasicDNS thì lưu trong <strong>Advanced DNS → Host Records</strong>.</p>
+    <p>Nếu chưa có DMARC, thêm đúng một bản ghi TXT với các giá trị khởi đầu dưới đây.
+        Nếu đã có DMARC, kiểm tra bản ghi hiện tại trước khi thay chính sách.</p>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Type</th><th>Host</th><th>Value</th><th>TTL</th></tr></thead>
+            <tbody><tr><td>TXT</td><td><code>_dmarc</code></td><td><code>v=DMARC1; p=none; adkim=r; aspf=r</code></td><td>Automatic</td></tr></tbody>
+        </table>
+    </div>
+    <p class="helper-text">Tên đầy đủ: <code>_dmarc.<?= adminH($senderDomain) ?></code>.
+        Với Namecheap, ô Host chỉ nhập <code>_dmarc</code>. Bảng này là hướng dẫn, không tự ghi DNS.</p>
+    <p class="helper-text">Sau khi DNS cập nhật, mở một email mới trong Gmail → menu ba chấm của email → Hiển thị thư gốc.
+        Kiểm tra SPF, DKIM và DMARC có kết quả PASS. Xác thực thành công không bảo đảm mọi thư vào Inbox;
+        Gmail còn đánh giá uy tín người gửi và phản hồi của người nhận.
+        <a href="https://support.google.com/mail/answer/81126?hl=vi" target="_blank" rel="noopener noreferrer">Hướng dẫn Google</a>.</p>
+</div>
+<?php endif; ?>
 <div class="panel">
     <div class="panel-header"><h3>Trạng thái gửi đơn mới hôm nay</h3></div>
     <?php if ($deliveryStateError): ?>

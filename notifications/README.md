@@ -1,81 +1,118 @@
-# Th?ng b?o email
+# Thông báo email
 
-Module g?i th?ng b?o ??n h?ng m?i v? b?o c?o doanh thu h?ng ng?y. C? hai d?ng chung c?u h?nh SMTP v? danh s?ch ng??i nh?n trong **Admin ? C?u h?nh email** (`admin/mail_settings.php`).
+Module gửi thông báo đơn hàng mới và báo cáo doanh thu hằng ngày. Cả hai dùng chung cấu hình SMTP và danh sách người nhận trong **Admin → Cấu hình email** (`admin/mail_settings.php`).
 
-## C?u h?nh trong admin
+## Cấu hình trong admin
 
-- Ch? t?i kho?n admin ???c thay c?u h?nh v? xem tr?ng th?i g?i.
-- Nh?p nhi?u email, m?i d?ng m?t ??a ch? ho?c ph?n c?ch b?ng d?u ph?y/ch?m ph?y. ??a ch? tr?ng ???c g?p; m?i ng??i nh?n m?t th? ri?ng.
-- ?i?n m?y ch? SMTP, c?ng, m? h?a, t?i kho?n v? ??a ch? g?i theo th?ng tin c?a nh? cung c?p email. Th??ng d?ng SSL/TLS c?ng 465 ho?c STARTTLS c?ng 587.
-- ?? tr?ng ? m?t kh?u ?? gi? nguy?n m?t kh?u ?? l?u.
-- B?t/t?t ri?ng th?ng b?o ??n m?i v? b?o c?o doanh thu. Gi? hi?n th? theo UTC+7 (`Asia/Bangkok`).
+- Chỉ admin được thay cấu hình và xem trạng thái gửi.
+- Nhập nhiều email, mỗi dòng một địa chỉ hoặc phân cách bằng dấu phẩy/chấm phẩy. Địa chỉ trùng được gộp; mỗi người nhận một thư riêng.
+- Điền máy chủ SMTP, cổng, mã hóa, tài khoản và địa chỉ gửi theo thông tin của nhà cung cấp. Thường dùng SSL/TLS cổng 465 hoặc STARTTLS cổng 587.
+- Để trống mật khẩu để giữ nguyên mật khẩu đã lưu.
+- Bật/tắt riêng thông báo đơn mới và báo cáo doanh thu. Giờ hiển thị theo UTC+7 (`Asia/Bangkok`).
 
-C?u h?nh ???c ??c theo th? t? ?u ti?n: `config.php` ? `config.local.php` ? `runtime/mail-settings.json`. Khi ?? l?u b?ng admin, ch?nh c?u h?nh tr?n trang n?y thay v? s?a file PHP.
+Cấu hình được đọc theo thứ tự ưu tiên: `config.php` → `config.local.php` → `runtime/mail-settings.json`. Khi đã lưu qua admin, chỉnh trên trang này thay vì sửa PHP. Bộ gửi dùng tên miền của địa chỉ From để định danh SMTP; envelope sender cùng địa chỉ From. DKIM do máy chủ SMTP ký, không được xác nhận chỉ bằng việc tồn tại một khóa công khai trong DNS.
 
-## G?i th?ng b?o ??n m?i
+## Xác thực tên miền để gửi đến Gmail
 
-`cart.php` g?i `order_hook.php` sau khi ghi xong c?c m?n; `admin/pos.php` g?i sau khi giao d?ch ???c COMMIT th?nh c?ng. B? g?i x? l? khi request k?t th?c, sau ph?n h?i chuy?n trang n?u m?y ch? h? tr?. Kh?ng c?n cron cho l?n g?i ??u, k? c? tr?n XAMPP. L?i email kh?ng h?y ??n ?? l?u.
+Xác thực SPF/DKIM/DMARC và cấu hình DNS đúng giúp Gmail nhận diện người gửi. Gmail vẫn đánh giá uy tín IP/tên miền và phản hồi người nhận; không có tùy chọn PHP bảo đảm mọi thư vào Inbox. Tham khảo [hướng dẫn Google](https://support.google.com/mail/answer/81126?hl=vi).
 
-Ch? g?i ??n thu?c ng?y hi?n t?i, t?o t? l?c b?t t?nh n?ng. T?t r?i b?t l?i s? l?y m?c m?i. T?ng c?c d?ng m?n ph?i kh?p t?ng ti?n ??n. Trang c?u h?nh email hi?n th? l?n x? l? g?n nh?t v? s? th? ?? ???c SMTP ti?p nh?n, b? l?i ho?c c?n ??i so?t.
+Với tên miền `sotayaxiu.site`, lần kiểm tra ngày 15/10/2026 ghi nhận:
 
-C? th? th?m Cron Job m?i ph?t (`* * * * *`) ?? th? l?i th? l?i trong c?ng ng?y ho?c x? l? ph?n c?n l?i khi m?t ??n c? tr?n 50 ng??i nh?n:
+- SMTP SSL cổng 465 tại `sotayaxiu.site`, địa chỉ gửi `_mainaccount@sotayaxiu.site`.
+- SPF công khai có cho phép IP `103.15.222.22`.
+- DKIM selector `default` có khóa RSA 2048 bit công khai.
+- PTR của IP trên là `hosting222.lanit.com.vn`; hostname này phân giải về cùng IP.
+- Sau khi chủ tên miền cập nhật DNS, đã xác nhận TXT `_dmarc.sotayaxiu.site` trả về `v=DMARC1; p=none;` từ DNS Namecheap, Google (`8.8.8.8`) và Cloudflare (`1.1.1.1`).
+- Header của thư kiểm tra lúc 19:37 (UTC+7), do người nhận cung cấp, xác nhận Gmail đánh giá **SPF PASS, DKIM PASS, DMARC PASS**, kết nối TLS 1.3. Người nhận vẫn thấy thư trong Spam. Header này chưa xác định được nguyên nhân phân loại Spam; không cần đổi chính sách DMARC để sửa một lỗi xác thực không tồn tại.
+
+Bộ gửi có lớp `NotificationMailer.php` giới hạn từng khối mã hóa header theo [RFC 2047](https://www.rfc-editor.org/rfc/rfc2047.html#section-2). Tiêu đề tiếng Việt dài được chia khối mà không cắt giữa ký tự UTF-8; nội dung hiển thị giữ nguyên. Đây là sửa lỗi định dạng email, không phải bảo đảm vượt bộ lọc Spam.
+
+Thử lại sau sửa header lúc 19:53 ngày 15/10/2026: SMTP tiếp nhận thành công, các khối mã hóa dài tối đa 64 ký tự, nhưng người nhận vẫn xác nhận thư nằm trong Spam. Kết quả này chưa chứng minh nguyên nhân là uy tín IP/tên miền; cần dữ liệu từ Gmail/Postmaster hoặc nhà cung cấp SMTP để kết luận.
+
+### Vấn đề hạ tầng đã xác minh
+
+Tra cứu DNSBL ngày 15/10/2026 khoảng 19:56–19:57 (UTC+7) phát hiện IP gửi `103.15.222.22` nằm trong **Spamhaus SBL693406**: cả `22.222.15.103.zen.spamhaus.org` và `22.222.15.103.sbl.spamhaus.org` trả mã A `127.0.0.2`; TXT dẫn đến <https://check.spamhaus.org/sbl/query/SBL693406>. Truy vấn đối chứng dương/âm trả kết quả đúng. [Spamhaus xác nhận](https://docs.spamhaus.com/datasets/docs/source/10-data-type-documentation/datasets/040-zones.html) mã này là SBL, không phải mã lỗi truy vấn.
+
+Đây là vấn đề cụ thể cần nhà cung cấp SMTP xử lý; chưa chứng minh Gmail dựa riêng vào listing này. [Google](https://support.google.com/mail/answer/81126?hl=vi) lưu ý thư từ IP nằm trong blocklist có khả năng bị đánh dấu Spam cao hơn. Người dùng muốn khắc phục phía gửi, không dùng bộ lọc Gmail. Cần LANIT khắc phục nguyên nhân rồi yêu cầu gỡ SBL, hoặc cung cấp SMTP relay phù hợp để cấu hình lại. Theo [quy trình SBL](https://www.spamhaus.org/faqs/spamhaus-blocklist/), đơn vị quản lý IP phải thực hiện bước xử lý/gỡ listing. Thay DMARC hoặc chỉ đổi A record website không khắc phục listing của IP SMTP.
+
+Đã soạn [bản nháp yêu cầu hỗ trợ LANIT](SMTP_SUPPORT_REQUEST.md), chưa gửi ra ngoài. Giữ nguyên cấu hình SMTP hiện tại đến khi có phương án xác minh được từ nhà cung cấp. Cần kiểm tra lại listing và email thực tế sau khi nhà cung cấp xử lý; kết quả DNSBL có thể thay đổi theo thời gian.
+
+Nameserver hiện đặt ở Namecheap (`dns1.registrar-servers.com`, `dns2.registrar-servers.com`). Để bổ sung DMARC, mở **Domain List → Manage → Advanced DNS → Host Records → Add New Record**:
+
+| Trường | Giá trị khởi đầu |
+| --- | --- |
+| Type | TXT Record |
+| Host | `_dmarc` |
+| Value | `v=DMARC1; p=none; adkim=r; aspf=r` |
+| TTL | Automatic |
+
+Lưu bản ghi. Host chỉ nhập `_dmarc`, không kèm tên miền; tên đầy đủ sẽ là `_dmarc.sotayaxiu.site`. Chỉ tạo một bản ghi DMARC. Nếu bản ghi đã tồn tại, xem chính sách hiện tại trước khi chỉnh; không tự thay chính sách đang áp dụng bằng bản mẫu. `p=none` là chính sách khởi đầu không yêu cầu máy nhận cách ly/từ chối thư không xác thực. Bản ghi hiện tại `v=DMARC1; p=none;` vẫn hợp lệ: `adkim` và `aspf` mặc định là `r` khi không ghi rõ, theo [RFC 7489](https://www.rfc-editor.org/rfc/rfc7489.html#section-6.3). Chưa cấu hình địa chỉ nhận báo cáo DMARC vì chưa xác minh hộp thư dành cho báo cáo.
+
+SPF và DKIM đang tồn tại không cần tạo lại chỉ để thêm DMARC. Bản ghi trên phải lưu tại Namecheap; sửa file PHP hoặc DNS không có thẩm quyền trên hosting không tự xuất bản bản ghi. [Hướng dẫn Namecheap](https://www.namecheap.com/support/knowledgebase/article.aspx/317/2237/how-do-i-add-txtspfdkimdmarc-records-for-my-domain/).
+
+Sau khi DNS cập nhật, kiểm tra **một email mới** trong Gmail: mở email → menu ba chấm của email → **Hiển thị thư gốc / Show original**. Xem SPF, DKIM và DMARC có PASS, và phần `Authentication-Results`. DNS tồn tại chưa chứng minh máy chủ đã ký đúng hoặc Gmail đã xác thực thư. Nếu thư hợp lệ nằm trong Spam, người nhận có thể chọn **Không phải thư rác**; thao tác này không thay việc cấu hình xác thực tên miền.
+
+Nếu cả ba xác thực đã PASS nhưng thông báo hợp lệ vẫn vào Spam, có thể cấu hình riêng hộp thư Gmail nhận thông báo: mở tùy chọn tìm kiếm → trường **Từ** nhập chính xác `_mainaccount@sotayaxiu.site` → **Tạo bộ lọc** → chọn **Không bao giờ gửi vào thư rác** → **Tạo bộ lọc**. Thực hiện trong từng tài khoản Gmail muốn nhận thông báo. Với thư đã ở Spam, dùng **Không phải thư rác** để chuyển ra. Bộ lọc chỉ áp dụng cho tài khoản người nhận đã cấu hình, không phải thay đổi uy tín toàn bộ tên miền. [Hướng dẫn chính thức của Google](https://support.google.com/mail/answer/16457426?co=GENIE.Platform%3DDesktop&hl=vi).
+
+## Gửi thông báo đơn mới
+
+`cart.php` gọi `order_hook.php` sau khi ghi xong các món; `admin/pos.php` gọi sau COMMIT thành công. Bộ gửi chạy khi request kết thúc, sau phản hồi chuyển trang nếu máy chủ hỗ trợ. Không cần cron cho lần gửi đầu, kể cả trên XAMPP. Lỗi email không hủy đơn đã lưu.
+
+Chỉ gửi đơn thuộc ngày hiện tại, tạo từ lúc bật tính năng. Tắt rồi bật lại sẽ lấy mốc mới. Tổng các dòng món phải khớp tổng tiền đơn. Admin hiển thị lần xử lý gần nhất và số thư theo trạng thái.
+
+Có thể thêm Cron Job mỗi phút (`* * * * *`) để thử lại thư lỗi trong cùng ngày hoặc xử lý phần còn lại khi một đơn có trên 50 người nhận:
 
 ```sh
 /usr/local/bin/php /home/CPANEL_USER/public_html/notifications/send_order_notifications.php >> /home/CPANEL_USER/order-notifications.log 2>&1
 ```
 
-Thay ???ng d?n PHP, t?i kho?n v? th? m?c website b?ng th?ng tin hosting th?c t?. T?c v? qu?t ch? ??n ???c t?o ?t nh?t 5 gi?y v? x? l? t?i ?a 50 l?n g?i m?i l??t. M?c g?i sau l?u v? cron d?ng chung tr?ng th?i, b? qua ng??i ?? g?i, kh?ng g?i b? ng?y c?.
+Thay đường dẫn theo hosting thực tế. Tác vụ quét chờ đơn được tạo ít nhất 5 giây và xử lý tối đa 50 lần gửi mỗi lượt. Móc sau lưu và cron dùng chung trạng thái, bỏ qua người đã gửi, không gửi bù ngày cũ.
 
-## B?o c?o doanh thu h?ng ng?y
+## Báo cáo doanh thu hằng ngày
 
-B?o c?o t?nh **t?ng `orders.total_amount` ? t?ng chi `transactions.amount` c? `type = 'expense'`**, c?ng ph?m vi ng?y v? c?ng th?c c?a `summary.php`. Email g?m t?ng b?n h?ng, t?ng chi, doanh thu sau chi ph?, s? ??n v? th?i ?i?m c?p nh?t. D? li?u ???c ch?t ? l?n l?p b?o c?o ??u ti?n trong ng?y.
+Báo cáo tính **tổng `orders.total_amount` − tổng chi `transactions.amount` có `type = 'expense'`**, cùng phạm vi ngày và công thức của `summary.php`. Email gồm tổng bán hàng, tổng chi, doanh thu sau chi phí, số đơn và thời điểm cập nhật. Dữ liệu được chốt ở lần lập báo cáo đầu tiên trong ngày.
 
-B?o c?o theo gi? c?n Cron Job m?i ph?t (`* * * * *`); t?c v? ch? g?i t? gi? ?? c?u h?nh tr? ?i, m?c ??nh 23:00 UTC+7:
+Báo cáo theo giờ cần Cron Job mỗi phút (`* * * * *`); tác vụ chỉ gửi từ giờ đã cấu hình trở đi, mặc định 23:00 UTC+7:
 
 ```sh
 /usr/local/bin/php /home/CPANEL_USER/public_html/notifications/send_daily_revenue.php >> /home/CPANEL_USER/daily-revenue.log 2>&1
 ```
 
-Tr?n Windows, d?ng Task Scheduler ch?y `C:\xampp\php\php.exe`, ??i s? l? ???ng d?n tuy?t ??i ??n script t??ng ?ng, l?p m?i ph?t. Kh?ng c?n m? trang T?ng k?t hay gi? tr?nh duy?t ch?y.
+Trên Windows, dùng Task Scheduler chạy `C:\xampp\php\php.exe`, đối số là đường dẫn tuyệt đối đến script tương ứng, lặp mỗi phút. Không cần mở trang Tổng kết hoặc giữ trình duyệt chạy.
 
-## C?c file c?n gi? khi tri?n khai
+## Triển khai
 
-- `config.php`, `config.local.php`, `config.local.example.php`, `mail_settings.php`: c?u h?nh m?c ??nh, c?u h?nh ri?ng v? x? l? c?u h?nh admin.
-- `orders.php`, `order_hook.php`, `send_order_notifications.php`: th?ng b?o ??n m?i v? th? l?i.
-- `revenue.php`, `template.php`, `send_daily_revenue.php`: b?o c?o doanh thu.
-- `vendor/`, `composer.json`, `composer.lock`: th? vi?n PHPMailer v? th?ng tin c?i ??t.
-- `.htaccess`, `.gitignore`, `runtime/`: b?o v? truy c?p, lo?i d? li?u ri?ng kh?i Git v? l?u tr?ng th?i.
-- `tests/`: ki?m tra t? ??ng cho c?c ch?c n?ng ?ang s? d?ng; kh?ng c?n upload l?n hosting.
+Giữ các file cấu hình, `mail_settings.php`, `NotificationMailer.php`, `orders.php`, `order_hook.php`, `send_order_notifications.php`, `revenue.php`, `template.php`, `send_daily_revenue.php`, `vendor/`, `composer.json`, `composer.lock`, `.htaccess`, `.gitignore` và `runtime/`. `tests/` phục vụ kiểm tra, không cần upload lên hosting.
 
-N?u ch?a c? th? vi?n, c?i t? th? m?c g?c website:
+Nếu chưa có thư viện:
 
 ```sh
 composer install --working-dir=notifications --no-dev --no-interaction --prefer-dist --no-scripts --no-plugins
 ```
 
-PHP c?n t? 7.4, c? `mysqli` v? `openssl`. Khi c?p nh?t, upload c? module c?ng `cart.php`, `admin/pos.php`, `admin/mail_settings.php` v? menu admin ?? thay ??i. **Gi? c?u h?nh ri?ng v? to?n b? tr?ng th?i `runtime/` tr?n hosting**, tr?nh ghi ?? b?ng d? li?u m?y ph?t tri?n. C?p quy?n ghi `runtime/` cho PHP web v? PHP cron. `.htaccess` ch?n truy c?p web tr?n Apache; v?i Nginx, c?u h?nh t? ch?i truy c?p `/notifications/`.
+PHP cần từ 7.4, có `mysqli` và `openssl`. Upload cả module cùng `cart.php`, `admin/pos.php`, `admin/mail_settings.php` và menu admin đã cập nhật. Giữ cấu hình riêng và trạng thái `runtime/` trên hosting, không ghi đè bằng dữ liệu máy phát triển. Cấp quyền ghi `runtime/` cho PHP web và PHP cron. Giữ `.htaccess` chặn truy cập web trên Apache; với Nginx, cấu hình từ chối truy cập `/notifications/`.
 
-## Theo d?i v? ki?m tra
+## Theo dõi và kiểm tra
 
-- `runtime/order-checkout.log`: k?t qu? g?i sau khi l?u ??n.
-- `runtime/orders-YYYY-MM-DD.json`: tr?ng th?i t?ng ??n/ng??i nh?n; `order-notifications.lock` ng?n g?i ch?ng nhau.
-- `runtime/YYYY-MM-DD.json`: s? li?u v? tr?ng th?i b?o c?o doanh thu.
-- `runtime/mail-settings.json`: c?u h?nh ri?ng ???c l?u qua admin, c? th?ng tin SMTP; kh?ng ??a v?o Git ho?c chia s? c?ng khai.
+- `runtime/order-checkout.log`: kết quả gửi sau lưu đơn.
+- `runtime/orders-YYYY-MM-DD.json`: trạng thái từng đơn/người nhận; `order-notifications.lock` ngăn gửi chồng nhau.
+- `runtime/YYYY-MM-DD.json`: số liệu và trạng thái báo cáo doanh thu.
+- `runtime/mail-settings.json`: cấu hình SMTP riêng; không đưa vào Git hoặc chia sẻ công khai.
 
-Kh?ng x?a c?c file tr?ng th?i g?i ?? th? l?i: m?t tr?ng th?i c? th? g?y g?i tr?ng. Tr?ng th?i `sending` b? gi?n ?o?n chuy?n th?nh `uncertain`; ??i chi?u nh?t k? v? Track Delivery tr??c khi x? l?. SMTP ti?p nh?n ch?a b?o ??m th? v?o Inbox; ki?m tra Spam, gi?i h?n g?i v? c?u h?nh SPF/DKIM c?a t?n mi?n khi c?n.
+Không xóa trạng thái gửi để thử lại vì có thể gửi trùng. Trạng thái `sending` bị gián đoạn chuyển thành `uncertain`; đối chiếu nhật ký và Track Delivery trước khi xử lý. SMTP tiếp nhận chưa bảo đảm thư đã vào Inbox.
 
-Xem m?u HTML m? kh?ng k?t n?i database ho?c g?i email:
+Xem mẫu HTML, không kết nối database hoặc gửi email:
 
 ```sh
 php notifications/send_order_notifications.php --demo
 php notifications/send_daily_revenue.php --demo
 ```
 
-Ch?y ki?m tra t? ??ng (c?n th?m `pdo_sqlite`):
+Chạy kiểm tra tự động (cần `pdo_sqlite`):
 
 ```sh
 php notifications/tests/run.php
 php notifications/tests/mail_features.php
 ```
 
-C?c ki?m tra d?ng database trong b? nh? v? b? g?i gi?, kh?ng g?i th? th?t ho?c s?a database website.
+Các kiểm tra dùng database trong bộ nhớ và bộ gửi giả, không gửi thư thật hoặc sửa database website.
