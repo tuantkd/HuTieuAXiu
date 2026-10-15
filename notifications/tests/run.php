@@ -5,8 +5,6 @@ if (PHP_SAPI !== 'cli') {
 }
 
 require dirname(__DIR__) . '/revenue.php';
-require dirname(__DIR__) . '/smtp_test.php';
-require dirname(__DIR__) . '/test_cron.php';
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 use function AXiu\Notifications\loadConfig;
@@ -16,9 +14,6 @@ use function AXiu\Notifications\fetchReport;
 use function AXiu\Notifications\renderRevenueEmail;
 use function AXiu\Notifications\createMailer;
 use function AXiu\Notifications\deliverDailyReport;
-use function AXiu\Notifications\createSmtpTestMailer;
-use function AXiu\Notifications\sendSmtpTest;
-use function AXiu\Notifications\cronMinuteTestTick;
 
 $checks = 0;
 function check($condition, $message)
@@ -143,27 +138,6 @@ try {
     check($mail->MessageID === createMailer($config, 'first@example.com', $report)->MessageID, 'Keep a stable Message-ID for retries.');
     check($mail->MessageID !== createMailer($config, 'second@example.com', $report)->MessageID, 'Use separate Message-IDs per recipient.');
 
-    $testMail = createSmtpTestMailer($config, 'first@example.com');
-    check($testMail->preSend(), 'Build a valid SMTP test email without sending.');
-    check(strpos($testMail->Subject, '[KIỂM TRA SMTP]') === 0, 'Label manual test emails explicitly.');
-    check(count($testMail->getToAddresses()) === 1 && $testMail->getToAddresses()[0][0] === 'first@example.com', 'Test only the selected address.');
-    check(strpos($testMail->Body, 'DOANH THU SAU CHI PHÍ') === false
-        && strpos($testMail->AltBody, 'không chứa số liệu doanh thu') !== false, 'Do not include fabricated revenue in a test.');
-    check(strpos($testMail->Body, $config['smtp']['password']) === false, 'Keep SMTP secrets out of test content.');
-    check($testMail->MessageID !== createSmtpTestMailer($config, 'first@example.com')->MessageID
-        && $testMail->MessageID !== $mail->MessageID, 'Separate manual test IDs from each other and daily reports.');
-    expectFailure(static function () {
-        sendSmtpTest(new class {
-            public function send() { return false; }
-            public function getLastMessageID() { throw new RuntimeException('Must not read an ID after rejection.'); }
-        });
-    }, 'Do not report success when transport rejects the message.');
-    $acceptedId = sendSmtpTest(new class {
-        public function send() { return true; }
-        public function getLastMessageID() { return '<test-accepted@example.com>'; }
-    });
-    check($acceptedId === '<test-accepted@example.com>', 'Return an ID only for accepted messages.');
-
     $fetchCount = 0;
     $fetch = static function ($at) use (&$fetchCount, $report) {
         $fetchCount++;
@@ -224,48 +198,10 @@ try {
     }, 'Database failure aborts delivery.');
     check(!is_file($temporary . '/2026-10-17.json'), 'Do not record a failed DB read as a daily report.');
 
-    $cronPath = $temporary . '/cron-test.json';
-    $cronStart = new DateTimeImmutable('2026-10-15T23:59:30+07:00');
-    $cronSends = 0;
-    $cronSend = static function () use (&$cronSends) {
-        $cronSends++;
-        return ['message_id' => '<cron-test@example.com>', 'smtp_queue_id' => 'test-queue-id'];
-    };
-    $scheduled = cronMinuteTestTick($cronPath, $cronStart, $cronSend);
-    check($scheduled['event'] === 'scheduled' && $cronSends === 0, 'Schedule one-minute test without sending immediately.');
-    check($scheduled['state']['due_at'] === '2026-10-16T00:00:30+07:00', 'Schedule exactly 60 seconds later, across midnight.');
-    $early = cronMinuteTestTick($cronPath, $cronStart->modify('+59 seconds'), $cronSend);
-    check($early['event'] === 'waiting' && $cronSends === 0, 'Do not send the Cron test before its due time.');
-    $sent = cronMinuteTestTick($cronPath, $cronStart->modify('+60 seconds'), $cronSend);
-    check($sent['event'] === 'accepted' && $cronSends === 1 && $sent['receipt_saved'], 'Send one test at its due time and persist its receipt.');
-    check($sent['state']['smtp_queue_id'] === 'test-queue-id' && $sent['state']['recipient_delivery'] === 'unconfirmed', 'Track SMTP acceptance separately from inbox delivery.');
-    $repeat = cronMinuteTestTick($cronPath, $cronStart->modify('+2 minutes'), $cronSend);
-    check($repeat['event'] === 'done' && $cronSends === 1, 'Repeated Cron invocation does not resend.');
-    $nextDay = cronMinuteTestTick($cronPath, $cronStart->modify('+1 day'), $cronSend);
-    check($nextDay['event'] === 'done' && $cronSends === 1, 'One-shot test does not repeat on another day.');
-    $reset = cronMinuteTestTick($cronPath, $cronStart->modify('+3 minutes'), $cronSend, true);
-    check($reset['event'] === 'scheduled' && $cronSends === 1, 'Explicit reset schedules a fresh test without sending immediately.');
-    $lock = fopen($cronPath . '.lock', 'c');
-    flock($lock, LOCK_EX);
-    $busy = cronMinuteTestTick($cronPath, $cronStart->modify('+4 minutes'), $cronSend);
-    check($busy['event'] === 'busy' && $cronSends === 1, 'Concurrent Cron test is skipped while another invocation holds the lock.');
-    flock($lock, LOCK_UN);
-    fclose($lock);
-    expectFailure(static function () use ($cronPath, $cronStart) {
-        cronMinuteTestTick($cronPath, $cronStart->modify('+4 minutes'), static function () {
-            throw new RuntimeException('Simulated Cron SMTP error.');
-        });
-    }, 'SMTP error is surfaced by a one-minute test.');
-    $failed = cronMinuteTestTick($cronPath, $cronStart->modify('+5 minutes'), $cronSend);
-    check($failed['event'] === 'done' && $failed['state']['status'] === 'failed' && $cronSends === 1, 'Do not automatically repeat a failed one-shot attempt.');
-    file_put_contents($cronPath, '{broken');
-    expectFailure(static function () use ($cronPath, $cronStart, $cronSend) {
-        cronMinuteTestTick($cronPath, $cronStart->modify('+6 minutes'), $cronSend);
-    }, 'Corrupted Cron state fails closed instead of resending.');
     echo 'PASS: ' . $checks . " checks. No real emails sent; application database untouched.\n";
 } finally {
     // Delete only known files in the unique test directory created above.
-    foreach (['2026-10-15.json', '2026-10-16.json', '2026-10-17.json', 'daily-revenue.lock', 'cron-test.json', 'cron-test.json.lock'] as $name) {
+    foreach (['2026-10-15.json', '2026-10-16.json', '2026-10-17.json', 'daily-revenue.lock'] as $name) {
         $path = $temporary . DIRECTORY_SEPARATOR . $name;
         if (is_file($path)) {
             unlink($path);

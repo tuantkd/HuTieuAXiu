@@ -3,6 +3,7 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/helpers.php';
 
 requireAdmin();
+require_once __DIR__ . '/../notifications/order_hook.php';
 
 $page_title = 'POS bán hàng';
 $errorMessage = '';
@@ -92,6 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $itemStmt->close();
 
                 $conn->commit();
+                \AXiu\Notifications\queueOrderNotification($conn, $orderId);
                 adminFlashSet('Lưu đơn ' . $orderCode . ' thành công.', 'success');
                 header('Location: pos.php');
                 exit;

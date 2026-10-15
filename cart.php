@@ -2,6 +2,7 @@
 require_once 'config/db.php';
 require_once 'config/helpers.php';
 requireLogin();
+require_once __DIR__ . '/notifications/order_hook.php';
 
 if (isset($_GET['remove'])) {
     unset($_SESSION['cart'][(int) $_GET['remove']]);
@@ -77,6 +78,7 @@ if (isset($_POST['save_order'])) {
         $stmt2->execute();
     }
 
+    \AXiu\Notifications\queueOrderNotification($conn, $oid);
     $_SESSION['cart'] = [];
     redirect('success.php?id=' . $oid);
 }

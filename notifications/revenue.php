@@ -7,6 +7,8 @@ use PHPMailer\PHPMailer\PHPMailer;
 use RuntimeException;
 use Throwable;
 
+require_once __DIR__ . '/mail_settings.php';
+
 function loadConfig()
 {
     $config = require __DIR__ . '/config.php';
@@ -20,6 +22,11 @@ function loadConfig()
         $config = array_replace($config, $overrides);
         $config['smtp'] = $smtp;
     }
+
+    $managed = readMailSettings(__DIR__ . '/runtime/mail-settings.json');
+    $smtp = array_replace($config['smtp'], $managed['smtp'] ?? []);
+    $config = array_replace($config, $managed);
+    $config['smtp'] = $smtp;
 
     new DateTimeZone($config['timezone']);
     if (!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/D', $config['send_time'])) {
@@ -51,10 +58,12 @@ function validateDeliveryConfig(array $config)
             throw new RuntimeException('Thiếu hoặc sai cấu hình SMTP: ' . $key . '.');
         }
     }
-    if (!filter_var($smtp['host'], FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)
+    if (
+        !filter_var($smtp['host'], FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)
         || !filter_var($smtp['from_email'], FILTER_VALIDATE_EMAIL)
         || !filter_var($smtp['port'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]])
-        || !in_array($smtp['encryption'], ['ssl', 'tls'], true)) {
+        || !in_array($smtp['encryption'], ['ssl', 'tls'], true)
+    ) {
         throw new RuntimeException('Kiểm tra SMTP host, port, from_email và encryption (ssl hoặc tls).');
     }
 
@@ -212,9 +221,11 @@ function deliverDailyReport(array $config, DateTimeImmutable $now, callable $fet
         $path = $stateDirectory . '/' . $now->format('Y-m-d') . '.json';
         if (is_file($path)) {
             $state = json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
-            if (!is_array($state) || !isset($state['report'], $state['sent'])
+            if (
+                !is_array($state) || !isset($state['report'], $state['sent'])
                 || !is_array($state['report']) || !is_array($state['sent'])
-                || ($state['report']['date'] ?? '') !== $now->format('Y-m-d')) {
+                || ($state['report']['date'] ?? '') !== $now->format('Y-m-d')
+            ) {
                 throw new RuntimeException('Trạng thái gửi không hợp lệ; dừng để tránh gửi trùng.');
             }
         } else {
@@ -228,10 +239,12 @@ function deliverDailyReport(array $config, DateTimeImmutable $now, callable $fet
         }
         $snapshot = isset($state['report']['generated_at']) && is_string($state['report']['generated_at'])
             ? DateTimeImmutable::createFromFormat(DateTimeImmutable::ATOM, $state['report']['generated_at']) : false;
-        if (!$snapshot || $snapshot->format('Y-m-d') !== $now->format('Y-m-d')
+        if (
+            !$snapshot || $snapshot->format('Y-m-d') !== $now->format('Y-m-d')
             || $state['report']['date'] !== $now->format('Y-m-d')
             || $state['report']['net_revenue'] !== $state['report']['revenue_total'] - $state['report']['expense_total']
-            || $state['report']['order_count'] < 0) {
+            || $state['report']['order_count'] < 0
+        ) {
             throw new RuntimeException('Số liệu báo cáo không hợp lệ; hủy gửi.');
         }
         if (!is_file($path)) {

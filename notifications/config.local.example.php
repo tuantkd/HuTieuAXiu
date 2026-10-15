@@ -2,6 +2,7 @@
 // Copy to config.local.php, enter your actual settings, then enable delivery.
 return [
     'enabled' => false,
+    'new_orders_enabled' => false, // Prefer enabling this on admin/mail_settings.php.
     'send_time' => '23:00',
     'recipients' => [
         'nguoinhan1@example.com',

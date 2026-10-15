@@ -20,6 +20,7 @@ $menuItems = [
     ['href' => 'report.php', 'label' => 'Quản lý báo cáo', 'roles' => [ADMIN_ROLE]],
     ['href' => 'users.php', 'label' => 'Quản lý người dùng', 'roles' => [ADMIN_ROLE]],
     ['href' => 'settings.php', 'label' => 'Cài đặt', 'roles' => [ADMIN_ROLE]],
+    ['href' => 'mail_settings.php', 'label' => 'Cấu hình email', 'roles' => [ADMIN_ROLE]],
 ];
 ?>
 <!DOCTYPE html>

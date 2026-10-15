@@ -20,6 +20,7 @@
   - `order_items.product_name`, `order_items.price`, `order_items.quantity`, `order_items.subtotal`
 - Quản lý món trong admin dùng `products.category_id` và bảng `categories`.
 - Cài đặt admin map trực tiếp vào `settings.shop_name`, `settings.phone`, `settings.address`, `settings.open_hours`, `settings.logo_url`.
+- Trang **Cấu hình email** (`mail_settings.php`) chỉ dành cho admin: quản lý SMTP, nhiều địa chỉ nhận, bật/tắt thông báo đơn mới và báo cáo doanh thu; hiển thị trạng thái gửi trong ngày. Ô mật khẩu để trống sẽ giữ nguyên. Cấu hình lưu riêng trong `notifications/runtime/mail-settings.json`, không đổi schema hay cách tính tiền. Thông báo đơn mới tự chạy sau khi lưu đơn thành công, không cần cron cho lần gửi đầu; cron dùng thử lại khi lỗi và gửi báo cáo theo giờ, theo [hướng dẫn email](../notifications/README.md).
 
 ## Cách chạy trên XAMPP
 

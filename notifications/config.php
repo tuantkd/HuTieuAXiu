@@ -1,7 +1,9 @@
 <?php
-// Override these defaults in config.local.php; keep SMTP passwords out of Git.
+// Defaults < config.local.php < settings saved on admin/mail_settings.php.
 return [
     'enabled' => false,
+    'new_orders_enabled' => false,
+    'new_orders_since' => null,
     'timezone' => 'Asia/Bangkok',
     'send_time' => '23:00', // HH:MM, local time (UTC+7).
     'shop_name' => 'Hủ Tiếu A Xíu',
