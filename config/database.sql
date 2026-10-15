@@ -166,7 +166,7 @@ INSERT INTO
   settings (shop_name, phone, address, open_hours, logo_url)
 VALUES
   (
-    'Quán Hủ Tiếu A Xíu',
+    'Quán Bì Cuốn A Xíu',
     '0912 345 678',
     '123 Đường Ẩm Thực, Quận 1, TP.HCM',
     '06:00 - 21:30',

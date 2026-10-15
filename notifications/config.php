@@ -6,7 +6,7 @@ return [
     'new_orders_since' => null,
     'timezone' => 'Asia/Bangkok',
     'send_time' => '23:00', // HH:MM, local time (UTC+7).
-    'shop_name' => 'Hủ Tiếu A Xíu',
+    'shop_name' => 'Bì Cuốn A Xíu',
     'recipients' => [],
     'smtp' => [
         'host' => '',

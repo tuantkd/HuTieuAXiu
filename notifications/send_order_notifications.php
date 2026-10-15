@@ -8,7 +8,7 @@ require __DIR__ . '/orders.php';
 
 use function AXiu\Notifications\loadConfig;
 use function AXiu\Notifications\validateDeliveryConfig;
-use function AXiu\Notifications\fetchNotificationOrders;
+use function AXiu\Notifications\fetchOrderRevenueNotifications;
 use function AXiu\Notifications\renderOrderEmail;
 use function AXiu\Notifications\createOrderMailer;
 use function AXiu\Notifications\deliverOrderNotifications;
@@ -32,6 +32,10 @@ try {
             'id' => 123, 'order_code' => 'AX-DEMO-123', 'created_at' => $now->format('Y-m-d H:i:s'),
             'order_type' => 'cash', 'total_amount' => 75000, 'note' => 'Ít hành',
             'full_name' => 'Nhân viên mẫu', 'username' => 'demo',
+            'revenue_report' => [
+                'date' => $now->format('Y-m-d'), 'generated_at' => $now->format(DateTimeImmutable::ATOM),
+                'revenue_total' => 975000, 'expense_total' => 250000, 'net_revenue' => 725000, 'order_count' => 13,
+            ],
         ], $config['shop_name'])['html'];
         exit(0);
     }
@@ -47,7 +51,7 @@ try {
     require __DIR__ . '/../config/db.php';
     try {
         $result = deliverOrderNotifications($config, $now, static function ($at, $since) use ($conn) {
-            return fetchNotificationOrders($conn, $at, $since);
+            return fetchOrderRevenueNotifications($conn, $at, $since);
         }, static function ($recipient, $order) use ($config) {
             if (!createOrderMailer($config, $recipient, $order)->send()) {
                 throw new RuntimeException('SMTP chưa xác nhận nhận thông báo đơn mới.');

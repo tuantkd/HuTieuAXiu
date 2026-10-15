@@ -55,39 +55,58 @@ function fetchNotificationOrders($conn, DateTimeImmutable $now, $since, $orderId
     }
 }
 
+function fetchOrderRevenueNotifications($conn, DateTimeImmutable $now, $since, $orderId = null)
+{
+    $orders = fetchNotificationOrders($conn, $now, $since, $orderId);
+    if (!$orders) {
+        return [];
+    }
+    // Recalculate the whole day, including orders before notification activation.
+    // Each order keeps this snapshot for every recipient and any later retry.
+    $report = fetchReport($conn, $now);
+    foreach ($orders as &$order) {
+        $order['revenue_report'] = $report;
+    }
+    unset($order);
+    return $orders;
+}
+
+function orderRevenueReport(array $order)
+{
+    $report = $order['revenue_report'] ?? null;
+    if (!is_array($report) || ($report['date'] ?? '') !== substr($order['created_at'], 0, 10)
+        || empty($report['generated_at'])) {
+        throw new RuntimeException('Thiếu báo cáo doanh thu đúng ngày của đơn hàng; hủy gửi để tránh sai số liệu.');
+    }
+    foreach (['revenue_total', 'expense_total', 'net_revenue', 'order_count'] as $key) {
+        if (!isset($report[$key]) || !is_int($report[$key])) {
+            throw new RuntimeException('Số liệu báo cáo doanh thu của đơn hàng không hợp lệ.');
+        }
+    }
+    if ($report['order_count'] < 1 || $report['net_revenue'] !== $report['revenue_total'] - $report['expense_total']) {
+        throw new RuntimeException('Tổng hợp doanh thu của đơn hàng không khớp; hủy gửi.');
+    }
+    return $report;
+}
+
 function renderOrderEmail(array $order, $shopName)
 {
     $created = new DateTimeImmutable($order['created_at']);
     $money = number_format((int) $order['total_amount'], 0, ',', '.') . ' đ';
     $type = $order['order_type'] === 'bank_transfer' ? 'Chuyển khoản' : 'Tiền mặt';
     $seller = $order['full_name'] ?: ($order['username'] ?: 'Không xác định');
-    $text = $shopName . "\nTHÔNG BÁO ĐƠN HÀNG MỚI\n\nMã đơn: " . $order['order_code']
+    $details = 'Mã đơn: ' . $order['order_code']
         . "\nThời gian: " . $created->format('H:i:s d/m/Y') . ' (UTC+7)'
         . "\nTổng tiền: " . $money . "\nThanh toán: " . $type
-        . "\nNgười bán: " . $seller . "\nGhi chú: " . ($order['note'] ?: 'Không có')
-        . "\n\nSổ Tay A Xíu - Thông báo đơn hàng tự động.";
-    $escape = static function ($value) {
-        return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-    };
-    return [
-        'subject' => $shopName . ' | Đơn mới ' . $order['order_code'] . ': ' . $money,
-        'text' => $text,
-        'html' => '<!doctype html><html lang="vi"><head><meta charset="utf-8"></head>'
-            . '<body style="background:#fff7f2;padding:24px;font-family:Arial,sans-serif;color:#4a2b1a">'
-            . '<div style="max-width:600px;margin:auto;background:white;padding:28px;border-radius:16px">'
-            . '<h1 style="font-size:24px;color:#c74420">Đơn hàng mới</h1><p style="line-height:1.8">'
-            . nl2br($escape($text)) . '</p></div></body></html>',
-    ];
+        . "\nNgười bán: " . $seller . "\nGhi chú: " . ($order['note'] ?: 'Không có');
+    $content = renderRevenueEmail(orderRevenueReport($order), $shopName, $details);
+    $content['subject'] .= ' | Sau đơn ' . $order['order_code'];
+    return $content;
 }
 
 function createOrderMailer(array $config, $recipient, array $order)
 {
-    // Reuse only SMTP construction; replace all daily-report content and identity.
-    $mail = createMailer($config, $recipient, [
-        'date' => substr($order['created_at'], 0, 10),
-        'generated_at' => (new DateTimeImmutable($order['created_at'], new DateTimeZone($config['timezone'])))->format(DateTimeImmutable::ATOM),
-        'revenue_total' => 0, 'expense_total' => 0, 'net_revenue' => 0, 'order_count' => 0,
-    ]);
+    $mail = createMailer($config, $recipient, orderRevenueReport($order));
     $content = renderOrderEmail($order, $config['shop_name']);
     $mail->Subject = $content['subject'];
     $mail->Body = $content['html'];
@@ -141,6 +160,11 @@ function deliverOrderNotifications(array $config, DateTimeImmutable $now, callab
             $entry = &$state['orders'][$id];
             if (!is_array($entry) || !isset($entry['order'], $entry['recipients']) || !is_array($entry['order']) || !is_array($entry['recipients'])) {
                 throw new RuntimeException('Trạng thái người nhận không hợp lệ; dừng để tránh gửi trùng.');
+            }
+            // Pending entries from older versions contain only order details.
+            // Attach their first report without replacing an existing snapshot.
+            if (!isset($entry['order']['revenue_report']) && isset($order['revenue_report'])) {
+                $entry['order']['revenue_report'] = $order['revenue_report'];
             }
             foreach ($entry['recipients'] as $recipient => &$status) {
                 if (!in_array($status, ['pending', 'sending', 'sent', 'failed', 'uncertain'], true)) {

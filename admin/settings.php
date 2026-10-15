@@ -6,7 +6,7 @@ requireRole(ADMIN_ROLE);
 
 $page_title = 'Cài đặt';
 $setting = admin_get_setting_row() ?: [
-    'shop_name' => 'Quán Hủ Tiếu A Xíu',
+    'shop_name' => 'Quán Bì Cuốn A Xíu',
     'phone' => '',
     'address' => '',
     'open_hours' => '',

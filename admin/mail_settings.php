@@ -100,9 +100,10 @@ include_once __DIR__ . '/layout/header.php';
     <input type="hidden" name="csrf_token" value="<?= adminH($_SESSION['mail_settings_csrf']) ?>">
     <div class="field field--full">
       <label class="checkbox-inline"><input type="checkbox" name="new_orders_enabled" value="1"
-          <?= $fields['new_orders_enabled'] === '1' ? 'checked' : '' ?>> Gửi email khi có đơn hàng mới</label>
-      <div class="helper-text">Tự gửi sau khi lưu đơn thành công, áp dụng cho cả quầy bán hàng và POS admin. Chỉ gửi đơn
-        trong ngày, từ lúc bật tính năng; không cần cron để gửi lần đầu.</div>
+          <?= $fields['new_orders_enabled'] === '1' ? 'checked' : '' ?>> Gửi báo cáo doanh thu sau mỗi đơn hàng mới</label>
+      <div class="helper-text">Sau mỗi đơn thành công ở quầy hoặc POS admin, gửi tổng tiền tất cả đơn hôm nay, tổng chi phí,
+        số tiền còn lại và thông tin đơn vừa tạo. Chỉ kích hoạt với đơn trong ngày, từ lúc bật tính năng;
+        số liệu báo cáo tính toàn bộ ngày (UTC+7). Không cần cron để gửi lần đầu.</div>
     </div>
     <div class="field">
       <label class="checkbox-inline"><input type="checkbox" name="enabled" value="1" <?= $fields['enabled'] === '1' ? 'checked' : '' ?>> Gửi báo cáo doanh thu hằng ngày</label>
@@ -221,8 +222,11 @@ include_once __DIR__ . '/layout/header.php';
       lỗi: <strong><?= $deliverySummary['failed'] ?></strong>;
       chờ gửi: <strong><?= $deliverySummary['pending'] ?></strong>;
       cần đối soát: <strong><?= $deliverySummary['uncertain'] ?></strong>.</p>
-    <p class="helper-text">Nếu chưa nhận thư đã được SMTP tiếp nhận, kiểm tra Hộp thư đến/Spam và Track Delivery trên
-      hosting.</p>
+    <p class="helper-text">SMTP tiếp nhận chưa xác nhận thư đã tới hộp thư. Kiểm tra Hộp thư đến/Spam và Track Delivery
+      trên hosting. Nếu có lỗi “exceeded the max emails per hour”, “exceeded the max defers and failures per hour”
+      hoặc “Message discarded”, liên hệ nhà cung cấp hosting kiểm tra hạn mức và lỗi chuyển thư trước khi thử lại.</p>
+    <p class="helper-text">Mỗi đơn tạo một email riêng cho mỗi người nhận. Hạn mức SMTP mỗi giờ cần đáp ứng số đơn
+      trong giờ × số người nhận, cộng các thư báo cáo khác và lần gửi lại.</p>
   <?php else: ?>
     <p>Chưa ghi nhận lần gửi nào hôm nay. Khi bật thông báo, đơn mới được gửi tự động sau khi lưu thành công.</p>
   <?php endif; ?>

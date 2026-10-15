@@ -54,11 +54,17 @@ $netColor = $report['net_revenue'] < 0 ? '#b42318' : '#12664f';
                             <td align="right" style="padding:15px 0;font-weight:bold;"><?= $escape(number_format($report['order_count'], 0, ',', '.')) ?> đơn</td>
                         </tr>
                     </table>
+                    <?php if ($orderDetails !== ''): ?>
+                        <div style="margin-top:22px;padding:18px;background-color:#f8fafc;border:1px solid #e4e7ec;border-radius:10px;">
+                            <h2 style="margin:0 0 12px;font-size:16px;color:#173e35;">Cập nhật sau đơn hàng thành công</h2>
+                            <p style="margin:0;font-size:14px;line-height:1.8;"><?= nl2br($escape($orderDetails)) ?></p>
+                        </div>
+                    <?php endif; ?>
                     <p style="margin:22px 0 0;padding:14px 16px;background-color:#f8fafc;border-left:3px solid #cbd5e1;font-size:13px;line-height:1.7;color:#667085;">Số liệu được tính theo cùng công thức trên trang Tổng kết. Các giao dịch phát sinh hoặc chỉnh sửa sau thời điểm cập nhật chưa được tính trong email này.</p>
                 </td></tr>
                 <tr><td style="padding:20px 28px;background-color:#f8fafc;border-top:1px solid #edf0f3;">
                     <p style="margin:0;font-size:13px;line-height:1.7;color:#667085;"><strong>Sổ Tay A Xíu</strong> &middot; Thông báo doanh thu tự động</p>
-                    <p style="margin:5px 0 0;font-size:12px;line-height:1.6;color:#98a2b3;">Email được gửi hằng ngày đến danh sách nhận báo cáo đã cấu hình.</p>
+                    <p style="margin:5px 0 0;font-size:12px;line-height:1.6;color:#98a2b3;"><?= $orderDetails !== '' ? 'Email được gửi sau mỗi đơn hàng mới thành công đến danh sách nhận báo cáo đã cấu hình.' : 'Email được gửi hằng ngày đến danh sách nhận báo cáo đã cấu hình.' ?></p>
                 </td></tr>
             </table>
         </td></tr>

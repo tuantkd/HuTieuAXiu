@@ -22,7 +22,7 @@ function sendSavedOrderNotification($conn, $orderId)
         }
         require_once __DIR__ . '/vendor/autoload.php';
         $result = deliverOrderNotifications($config, $now, static function ($at, $since) use ($conn, $orderId) {
-            return fetchNotificationOrders($conn, $at, $since, $orderId);
+            return fetchOrderRevenueNotifications($conn, $at, $since, $orderId);
         }, static function ($recipient, $order) use ($config) {
             if (!createOrderMailer($config, $recipient, $order)->send()) {
                 throw new RuntimeException('SMTP chưa xác nhận nhận thông báo đơn mới.');

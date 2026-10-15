@@ -120,7 +120,7 @@ function fetchReport($conn, DateTimeImmutable $now)
     ];
 }
 
-function renderRevenueEmail(array $report, $shopName)
+function renderRevenueEmail(array $report, $shopName, $orderDetails = '')
 {
     $displayDate = DateTimeImmutable::createFromFormat('!Y-m-d', $report['date'])->format('d/m/Y');
     $money = static function ($amount) {
@@ -136,6 +136,7 @@ function renderRevenueEmail(array $report, $shopName)
         . "\n\nCông thức: tổng tiền bán hàng - tổng khoản chi."
         . "\nCập nhật đến " . $snapshot->format('H:i d/m/Y') . ' (UTC' . $snapshot->format('P') . ').'
         . "\nCác giao dịch phát sinh hoặc chỉnh sửa sau thời điểm cập nhật chưa được tính."
+        . ($orderDetails !== '' ? "\n\nCẬP NHẬT SAU ĐƠN HÀNG THÀNH CÔNG\n" . $orderDetails : '')
         . "\n\nSổ Tay A Xíu - Thông báo doanh thu tự động.";
 
     ob_start();
