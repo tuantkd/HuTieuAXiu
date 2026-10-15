@@ -1,0 +1,5 @@
+/vendor/
+/config.local.php
+/runtime/*
+!/runtime/.gitkeep
+/preview.html
